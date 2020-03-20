@@ -70,6 +70,31 @@ df = dataset("datasets", "iris")
 df = dataset("datasets", "iris")
 @test Douglass.@assert_vars_present(df, [:SepalLength,:SepalWidth])
 
+# @transform!
+include("src/douglass.jl")
+df = dataset("datasets", "iris")
+df.sp = categorical(df.Species)
+Douglass.@transform!(df, [:sp], [:SepalLength], :mymean,  mean(:SepalLength), :SepalWidth .> 3.0, [] )
+@test df[150,:mymean] === missing
+@test df[149,:mymean] ≈ 6.80588 atol = 1e-4
+include("src/douglass.jl")
+df = dataset("datasets", "iris")
+df.sp = categorical(df.Species)
+Douglass.@transform!(df, [:sp], [:SepalLength], :mymean,  mean(:SepalLength), :SepalWidth .> 3.0, [:fill] )
+@test df[150,:mymean] ≈ 6.80588 atol = 1e-4
+@test df[149,:mymean] ≈ 6.80588 atol = 1e-4
+
+Douglass.@transform!(df, [:sp], [:SepalLength], :mymean2,  mean(:mymean), :SepalWidth .> 0.0, [] )
+
+
+# @duplicates_drop!
+include("src/douglass.jl")
+df = dataset("datasets", "iris")
+df.sp = categorical(df.Species)
+Douglass.@duplicates_drop!(df, [:sp])
+@test df.SepalWidth ≈ [3.5;3.2;3.3] atol = 1e-4
+
+
 squareme(x::Real) = x*x
 Douglass.@gen(df, :mysum2, squareme.(:SepalLength))
 
@@ -111,13 +136,8 @@ Douglass.@bysort!(df, [:sp], [:SepalLength], Douglass.@generate!(_df, :x, 1.0))
 
 using Statistics
 
-include("src/douglass.jl")
-df = dataset("datasets", "iris")
-df.sp = categorical(df.Species)
-Douglass.@transform!(df, [:sp], [:SepalLength], :mymean,  mean(:SepalLength), :SepalWidth .> 3.0)
 
-x_thread = @linq df |>
-    by(:sp, meanWidth = mean(:SepalWidth))
+
 
     transform(x = mean(:SepalWidth))
 
@@ -134,6 +154,32 @@ gd = groupby(df, :sp)
 for g in gd
     Douglass.@generate!(g, :x, 1.0)
 end
+
+include("src/douglass.jl")
+df = dataset("datasets", "iris")
+df.sp = categorical(df.Species)
+df[!,:mymean] = missings(Float64, size(df,1))
+x_thread = @linq df |>
+    where(:SepalWidth .> 3.0) |>
+    by(:sp, meanWidth = mean(:SepalLength)) 
+
+
+
+gd = groupby(df, :sp)
+my_f = _df -> @byrow! _df begin
+    @newcol x::Array{Float64}
+    :x = mean(:SepalLength)
+end
+by(df, [:sp], my_f )
+
+
+include("src/douglass.jl")
+df = dataset("datasets", "iris")
+df.sp = categorical(df.Species)
+Douglass.@gen_byrow2!(df, [:sp], [:SepalLength], :mymean, Float64, :SepalWidth[i]*:SepalLength[i], :PetalLength[i] > 3.0, [])
+
+
+
 
 Douglass.@drop!(df, [:SepalWidth :SepalLength])
 

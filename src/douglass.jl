@@ -1,7 +1,6 @@
 # douglass.jl
 
 # Todo implement for first version:
-# @bysort <varlist> (<varlist>) : <operation>
 # @duplicates_drop! <varlist>
 # @merge! x:x <varlist> using <df2>
 # @reshape! <type> <varlist> , i(<varlist>) j(<varlist>)
@@ -18,7 +17,19 @@
 # WARNING:
 # Douglass does not sanitize your input. If you run @gen(df, :x, destory_world()), 
 # that's your responsibility. You've been warned.
-
+#
+# ANOTHER WARNING:
+# There are some notable differences to how Stata behaves:
+# - Variables in a DataFrame are denoted using symbols, e.g. ``:myvariable` as opposed to Stata's `myvariable`
+# - Missing values are NOT considered greater than any real number. If you if-condition evaluates to a missing number (in julia), 
+#   such as for example the condition `missing > 5`, then we will treat that like `false`. In other words, only if the condition
+#   evaluates explicitly to `true`, or is automatically converted to `true`, the condition is considered satisfied. 
+# - There is only one missing value, namely `missing`.
+# - If `egen` does not have any nonmissing observations to work with, it returns `missing`, not zero (i.e. what the option `missing` does in Stata).
+# - `egen` and `ereplace` operate on vectors of variables (in each group), whereas `gen` and `replace` operate on scalars. That means that in 
+#   the former, you can use functions that take vectors as arguments, but if you do element-wise operations you have to broadcast these operations
+#   (e.g. `bysort groupvar: egen :z = mean(:x)`, or `bysort groupvar: egen :z = :x .+ :y`). In `gen` and `replace`, you can use indexing, e.g. using
+#   `bysort groupvar: gen :z = :x[_n] - :x[_n-1]`.
 module Douglass
 
     using Tables, DataFrames, DataFramesMeta
@@ -204,47 +215,157 @@ module Douglass
         )
     end
 
-    # work in progress
-    macro bysort!(t::Symbol, varlist_by::Expr, varlist_sort::Expr, rest::Expr)
-        esc(
-            quote
-                # make sure varlist_by and varlist_sort are present
-                Douglass.@assert_vars_present($t, $varlist_by)
-                Douglass.@assert_vars_present($t, $varlist_sort)
-
-                # split
-                gd = DataFrames.groupby($t, $varlist_by)
-                for _df ∈ gd
-                    $rest
-                end
-            end
-        )
-    end
-
     # this macro is the generic macro for transformations of the sort:
     # bysort varlist (varlist): <assigned_var> = <expr> if <filter>
     # do not do any checks
-    macro transform!(t::Symbol, varlist_by::Expr, varlist_sort::Expr, assigned_var, transformation::Expr, filter::Expr)
+    # arguments:
+    #   fill::bool: if true, applies the statistic to all observations in the group, not just those for which `filter` expands to a statement that is `true`
+    macro transform!(t::Symbol, varlist_by::Expr, varlist_sort::Expr, assigned_var, transformation::Expr, filter::Expr, arguments::Expr)
         esc(
             quote
-                # @linq $t |>
-                #     where($filter) |>
-                #     sort($varlist_sort) |>
-                #     by($varlist_by, $transformation)
+                # create arguments in a local scope
+                args = $arguments
 
-                gd = groupby($t, $varlist_by)
-                gd2 = map(_df -> @with(_df, Douglass.helper_expand(_df,$(transformation))), gd)
-                out = DataFrame(gd2)
-                $t[!,$assigned_var] = out[!,:x1]
+                if :fill ∈ args
+                    # assign to all rows in each group, even if $filter is not true
+                    out = by($t, $varlist_by, _df -> @with(@where(_df, $filter), Douglass.helper_expand(_df,$(transformation))))
+                    $t[!,$assigned_var] = out[!,:x1]
+                else
+                    # assign only to rows where $filter is true
+                    $t[!,$(assigned_var)] = missings(Float64, size($t,1))
+                    assignme = @with($t,$(filter))
+                    out = by($t, $varlist_by, _df -> @with(@where(_df, $filter), Douglass.helper_expand(_df,$(transformation))))
+                    @with $t begin
+                        for i = 1:size($t,1)
+                            if assignme[i]
+                                $(assigned_var)[i] = out[i,^(:x1)]
+                            end 
+                        end
+                    end
+                end
                 $t
             end
 
         )
     end
 
+    # this is a version that uses @byrow! Has the advantage that we don't need to use vectorized syntax, but not much else
+    macro generate_byrow!(t::Symbol, varlist_by::Expr, varlist_sort::Expr, assigned_var, assigned_var_type::Expr, transformation::Expr, filter::Expr, arguments::Expr)
+        esc(
+            quote
+                # create arguments in a local scope
+                args = $arguments
+
+                # check variable is not present
+                ($(assigned_var) ∉ names($t)) || error("Variable $(assigned_var) already present in DataFrame.")
+
+                # this is the function that maps every sub-df into its transformed df
+                my_f = _df -> @byrow! _df begin
+                    @newcol $assigned_var::Array{Union{$assigned_var_type, Missing},1}
+                    $(assigned_var) = $(transformation)
+                end
+                $t = by($t, $varlist_by, my_f )
+                $t
+            end
+        )
+    end
+
+    # alternative version, doing stuff by row using @with (which has the advantage that we can use "[i]" syntax)
+    # todo: 
+    #   allow _n 
+    #   assume that user means [i] if no index is shown (in transformation and filter)
+    macro gen_byrow2!(t::Symbol, varlist_by::Expr, varlist_sort::Expr, assigned_var, assigned_var_type, transformation::Expr, filter, arguments::Expr)
+        esc(
+            quote
+                # create arguments in a local scope
+                #args = $arguments
+
+                # check that assigned_var_type is a valid type
+                isa($(assigned_var_type),DataType) || error("assigned_var_type must be a DataType")
+
+                # check variable is not present
+                ($(assigned_var) ∉ names($t)) || error("Variable $(assigned_var) already present in DataFrame.")
+                $t[!,$(assigned_var)] = missings($assigned_var_type,size($t,1))
+
+                # sort, if we need to, (first by-variables, then sort-variables)
+                if !isempty($(varlist_sort))
+                    sort!($t, vcat($varlist_by, $varlist_sort))
+                end
+
+                # this is the function that maps every sub-df into its transformed df
+                my_f = _df -> @with _df begin
+                    # fill the new variable, row by row
+                    for i in 1:size(_df,1)
+                        if ($filter)  # if condition is not satisfied, leave with missing
+                            $(assigned_var)[i] = $(transformation)
+                        end
+                    end
+                    _df
+                end
+                $t = by($t, $varlist_by, my_f )
+                $t
+            end
+        )
+    end
+
+    macro transform_byrow!(t::Symbol, varlist_by::Expr, varlist_sort::Expr, assigned_var, transformation::Expr, filter::Expr, arguments::Expr)
+        esc(
+            quote
+                # create arguments in a local scope
+                args = $arguments
+
+                # if variable is not present, needs to be created
+                # if $(assigned_var) ∈ names($t)
+
+                # this is the function that maps every sub-df into its transformed df
+                my_f = _df -> @byrow! _df begin
+                    @newcol x::Array{Float64}
+                    :x = mean(:SepalLength)
+                end
+                by(df, [:sp], my_f )
+
+                # if :fill ∈ args
+                #     # assign to all rows in each group, even if $filter is not true
+                #     out = by($t, $varlist_by, _df -> @with(@where(_df, $filter), Douglass.helper_expand(_df,$(transformation))))
+                #     $t[!,$assigned_var] = out[!,:x1]
+                # else
+                #     # assign only to rows where $filter is true
+                #     $t[!,$(assigned_var)] = missings(Float64, size($t,1))
+                #     assignme = @with($t,$(filter))
+                #     out = by($t, $varlist_by, _df -> @with(@where(_df, $filter), Douglass.helper_expand(_df,$(transformation))))
+                #     @with $t begin
+                #         for i = 1:size($t,1)
+                #             if assignme[i]
+                #                 $(assigned_var)[i] = out[i,^(:x1)]
+                #             end 
+                #         end
+                #     end
+                # end
+                $t
+            end
+
+        )
+    end
+
+    macro duplicates_drop!(t, varlist::Expr)
+        esc(
+            quote
+                Douglass.@assert_vars_present($t, $varlist)
+                unique!($t, $varlist)
+            end
+        )
+    end
+    
+    # HELPER FUNCTIONS *********************************************************
+
     # expand the argument x to the length of the df if it's not already a vector
+    # first generic version that supports size(_,1)
     function helper_expand(df, x)
-        size(x,1) == 1 ? repeat([x],size(df,1)) : x
+        (ismissing(x) || size(x,1) == 1) ? repeat([x],size(df,1)) : x
+    end
+    # ... or to a length of l::Int64
+    function helper_expand(l::Int64, x)
+        (ismissing(x) || size(x,1) == 1) ? repeat([x],l) : x
     end
 
     # macro m(t::Symbol, e::Expr)
