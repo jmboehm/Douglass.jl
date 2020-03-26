@@ -180,7 +180,6 @@ Douglass.@gen_byrow2!(df, [:sp], [:SepalLength], :mymean, Float64, :SepalWidth[i
 
 
 
-
 Douglass.@drop!(df, [:SepalWidth :SepalLength])
 
 @testthis bysort var1 (var2): egen bla = mean(x) on x .=5, missing
@@ -212,3 +211,24 @@ end
 macro douglass(ex::Expr...)
     @show ex
 end
+
+
+a = DataFrame(firm = [1,1,1,1,2,2,2,2], worker = [1,1,2,2,3,3,4,4], year = [2000,2001,2000,2001,2000,2001,2000,2001], wage = 20 .+ 20.0 .* rand(Float64,8))
+allowmissing!(a,[:wage])
+a[[2,3,6],:wage] .= missing
+a
+
+gd = groupby(a, [:firm])
+@transform(gd, averageWage = mean(skipmissing(:wage)))
+
+a[!,:wageIncrease] = missings(Float64,size(a,1))
+sort!(a, [:worker, :year])
+f = _df -> @with _df begin
+    for i = 2:size(_df,1)
+        :wageIncrease[i] = :wage[i] - :wage[i-1]
+    end
+    _df
+end
+by(a, [:worker], f)
+
+sort!(a, [:wage])
