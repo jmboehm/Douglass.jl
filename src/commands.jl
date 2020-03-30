@@ -357,3 +357,9 @@ macro merge!(t::Symbol, type, keys, rhs, options)
         end
     )
 end
+
+# high-level macros:
+
+macro egen()
+    println("we are in egen!")
+end

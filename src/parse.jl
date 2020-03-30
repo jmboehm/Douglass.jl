@@ -1,21 +1,42 @@
 
-macro mymacro()
-    println("You called my macro")
-end
-
-macro d_str(ex)
-    println("Calling macro:")
-    return Expr(:macrocall, Symbol("@$(ex)"), "")
-end
-d"mymacro"
 
 mutable struct Stream
     s::String
     pos::Int64
 end
 
+struct Prefix 
+    by::Vector{Symbol}
+    sort::Vector{Symbol}
+end
+
+struct Command
+    prefix::Union{Prefix, Nothing}
+    command::String
+    arguments::Union{Expr, Nothing}
+    filter::Union{Expr, Nothing}
+    use::String
+    options::Dict{String,String}
+end
+
+# mutable struct Block
+#     s::String
+#     type::BlockType
+# end
+
 # These keywords denote end of blocks
-block_delimiters = [": ", "if", "in", "using", "=", "," ]
+block_delimiters = ["if", "in", "using"]
+function block_delimiter_symbol(c::String)
+    if c == "if"
+        return :block_delimiter_if
+    elseif c == "in"
+        return :block_delimiter_in
+    elseif c == "using"
+        return :block_delimiter_using
+    else 
+        error("$c : Not a block delimiter")
+    end
+end
 
 word_delimiters = [' ', '\n', ',']
 function delimiter_symbol(c::Char)
@@ -121,21 +142,179 @@ function get_block(s::Stream)
     block_delimiter = :none
     ret_str = ""
     while block_delimiter == :none
-        s, word_delimiter = get_word(s)
-        if word_delimiter == :delimiter_nl
+        pos_before = s.pos
+        str, word_delimiter = get_word(s)
 
-        elseif :delimiter_comma
+        if str ∈ block_delimiters
+            # end the block because we've hit a keyword
+            block_delimiter = block_delimiter_symbol(str) 
+            # all these keywords expect something afterwards, so throw error if there's nothing
+            if word_delimiter != :delimiter_whitespace
+                error("Douglass: parse error: premature end of input after keyword `$(str)`.\n$(flush_and_indicate(s))")
+            end
+        elseif (word_delimiter == :delimiter_nl) || (word_delimiter == :delimiter_comment) || (word_delimiter == :delimiter_eof)
+            # the following end the line
+            block_delimiter = :block_delimiter_eol
+            ret_str = ret_str * str
+        elseif word_delimiter == :delimiter_colon
+            block_delimiter = :block_delimiter_colon
+            ret_str = ret_str * str
+        elseif word_delimiter == :delimiter_comma
+            block_delimiter = :block_delimiter_comma
+            ret_str = ret_str * str
+        elseif word_delimiter == :delimiter_whitespace
+            ret_str = ret_str * str * " " # and keep going
+        end
     end
+
+    return ret_str, block_delimiter
 
 end
 
-str = "bysort mygroup (myvar): egen var = mean(othervar) if thirdvar = 5, missing"
-s = Stream(str, 1)
 
-str2 = "bysort (var): gen"
-s2 = Stream(str2, 1)
-get_word(s2)
-get_word(s2)
+
+function parse(s::Stream)
+
+    delimiter = :none
+    level = 0 # this makes sure that the order of blocks is ok
+
+    # first block is either the prefix or the command
+    str, delimiter = get_block(s)
+    if delimiter == :block_delimiter_colon
+        # it's the prefix 
+        prefix = parse_prefix(strip(str))
+        # next one must be the main command
+        str, delimiter = get_block(s)
+        command, arguments = parse_main(strip(str))
+    else 
+        # it's the main part of the command
+        # no prefix
+        prefix = nothing
+        command, arguments = parse_main(strip(str))
+    end
+
+    if delimiter != :block_delimiter_eol
+        # next one is either if/in/using or go to options
+        if delimiter == :block_delimiter_comma 
+            # options 
+            str, delimiter = get_block(s)
+            filter = nothing
+            use = ""
+            options = parse_options(str)
+            if delimiter != :block_delimiter_eol 
+                # we don't allow any extra block after the options
+                error("Douglass: parse error: unexpected symbol.\n$(flush_and_indicate(s))")
+            end
+        else
+            # if/in/using
+            old_delimiter = delimiter
+            str, delimiter = get_block(s)
+            if old_delimiter == :block_delimiter_if
+                filter = Meta.parse(str)
+                use = ""
+            elseif old_delimiter == :block_delimiter_in
+                error("Douglass: parse error: `in` block is currently not supported.")
+            elseif old_delimiter == :block_delimiter_using
+                filter = nothing
+                use = str
+            end
+            # now the only valid delimiter is "," or EOL
+            if delimiter == :block_delimiter_comma
+                # options 
+                str, delimiter = get_block(s)
+                options = parse_options(str)
+                if delimiter != :block_delimiter_eol 
+                    # we don't allow any extra block after the options
+                    error("Douglass: parse error: unexpected symbol.\n$(flush_and_indicate(s))")
+                end
+            elseif delimiter != :block_delimiter_eol
+                error("Douglass: parse error: unexpected keyword.\n$(flush_and_indicate(s))")
+            else
+                # no options
+                options = Dict{String,String}()
+            end
+        end
+    else # no if/in/using or options after the main command
+        filter = nothing 
+        use = ""
+        options = Dict{String,String}()
+    end
+
+    println("Debug output:")
+    println("Prefix:")
+    @show prefix 
+    println("Command:")
+    @show command 
+    println("Arguments:")
+    @show arguments 
+    println("Filter:")
+    @show filter 
+    println("Using:")
+    @show use 
+    println("Options:")
+    @show options 
+    
+    return Command(prefix, command, arguments, filter, use, options)
+
+end
+
+function parse_prefix(str::AbstractString)
+    s = Stream(strip(str),1)
+    
+    byvars = Vector{Symbol}()
+    sortvars = Vector{Symbol}()
+
+    str, delimiter = get_word(s)
+    if str == "bysort"
+        while delimiter == :delimiter_whitespace
+            str, delimiter = get_word(s)
+            if str[1] == '('
+                # we're entering the sort part
+                # assert format (<varlist>)
+                (str[end] == ')') || error("Douglass: parse error: error parsing prefix. expecting ')'.\n$(flush_and_indicate(s))")
+                vars = split(str[2:end-1]," ")
+                sortvars = Symbol.(vars[.!isempty.(vars)])
+                (delimiter == :delimiter_eof) || error("Douglass: parse error: error parsing prefix. expected end of line after ')'.\n$(flush_and_indicate(s))")
+                break
+            else
+                # we're still in the 'by' part
+                !isempty(strip(str)) && push!(byvars, Symbol(strip(str)))
+            end
+        end
+        !isempty(sortvars) || error("Douglass: parse error: error parsing prefix. `bysort` expects a list of variables to sort by.\n$(flush_and_indicate(s))")
+    
+    elseif str == "by"
+        (delimiter == :delimiter_whitespace) || error("Douglass: parse error: error parsing prefix. expecting list of variable names.\n$(flush_and_indicate(s))")
+        while delimiter == :delimiter_whitespace
+            str, delimiter = get_word(s)
+            (str[1] != '(') || error("Douglass: parse error: `by` does not allow sorting. use `bysort`.\n$(flush_and_indicate(s))")
+            !isempty(strip(str)) && push!(byvars, Symbol(strip(str)))
+        end
+    else 
+        error("Douglass: parse error: error parsing prefix. prefix must be `by` or `bysort`.\n$(flush_and_indicate(s))")
+    end
+    return Prefix(byvars, sortvars)
+end
+function parse_main(str::AbstractString)
+
+    s = split(strip(str), " ", limit=2)
+    if length(s)==1 
+        # command only
+        command = s[1]
+        arguments = nothing
+    else
+        # command + arguments
+        command = s[1]
+        arguments = Meta.parse(s[2])
+    end
+
+    return command, arguments
+end
+function parse_options(str::String)
+    @warn("Parsing options not implemented yet.")
+    return Dict{String, String}()
+end
+
 
 
 # This is supposed to be an simple parser for commands.
@@ -162,35 +341,27 @@ function parse(str::AbstractString)
     # we 
 
     stream = Stream(str, 1)
+    cmd = parse(stream)
+
+
 
 end
 
-# the prefix is the stuff before a ": "
-function parse_prefix(prefix::AbstractString)
 
-end
-
-
-
-
-function read_next()
-
-end
-
-macro d_str(ex)
-    println("Entering d_str:")
-    println("$(typeof(ex))")
+# macro d_str(ex)
+#     println("Entering d_str:")
+#     println("$(typeof(ex))")
     
-    #return Expr(:macrocall, Symbol("@$(ex)"), "")
-end
+#     #return Expr(:macrocall, Symbol("@$(ex)"), "")
+# end
 
-d"replace x = 1 if y == 2"
+# d"replace x = 1 if y == 2"
 
-d"""
+# d"""
 
-"""
+# """
 
-s = Stream("bysort mygroup (mysort): gen x = 5",1)
+# s = Stream("bysort mygroup (mysort): gen x = 5",1)
 
 # # Stata prefix syntax
 # struct Prefix

@@ -31,7 +31,7 @@
 #   `bysort groupvar: gen :z = :x[_n] - :x[_n-1]`.
 module Douglass
 
-    using Tables, DataFrames, DataFramesMeta
+    using DataFrames, DataFramesMeta
     using MacroTools
 
     include("parse.jl")
@@ -48,6 +48,8 @@ module Douglass
     function helper_expand(l::Int64, x)
         (ismissing(x) || size(x,1) == 1) ? repeat([x],l) : x
     end
+
+    export @egen
 
     # macro m(t::Symbol, e::Expr)
     #     esc(
@@ -95,5 +97,5 @@ module Douglass
 
 end
 
-#@douglass bysort(var1,var2) frame(df) command(egen) args(arg1,arg2) if(condition) in(range) using(strfile) 
-
+# define the interface code outside
+include("interface.jl")
