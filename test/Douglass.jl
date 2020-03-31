@@ -103,7 +103,24 @@ p = parse_prefix(str)
 
 include("src/Douglass.jl")
 
-d"test"
+df = dataset("datasets", "iris")
+
+Douglass.set_active_df(:df)
+
+Douglass.@use(df)
+Douglass.@use df
+
+d"testme [:SepalLength, :SepalWidth]"
+
+d"drop [:SepalLength, :SepalWidth]"
+
+d"drop if :PetalLength .< 3.0"
+
+d"keep"
+
+d"keep if :PetalLength .< 3.0"
+
+d"sort [:SepalLength, :SepalWidth]"
 
 df = dataset("datasets", "iris")
 d"by mygroup1 mygroup2: egen :var = mean(:othervar) if thirdvar .== 5, missing"

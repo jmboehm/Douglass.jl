@@ -34,8 +34,28 @@ module Douglass
     using DataFrames, DataFramesMeta
     using MacroTools
 
+    include("Command.jl")
+
     include("parse.jl")
     include("commands.jl")
+
+    include("commands/drop.jl")
+    include("commands/keep.jl")
+    include("commands/sort.jl")
+    
+
+    global active_df
+
+    macro use(t::Symbol)
+        s = string(t)
+        return esc(:( Douglass.set_active_df( Symbol($s) ) ))
+    end
+
+    function set_active_df(df::Symbol)
+        global active_df
+        active_df = df
+
+    end
 
     # HELPER FUNCTIONS *********************************************************
 

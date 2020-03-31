@@ -5,24 +5,7 @@ mutable struct Stream
     pos::Int64
 end
 
-struct Prefix 
-    by::Vector{Symbol}
-    sort::Vector{Symbol}
-end
 
-struct Command
-    prefix::Union{Prefix, Nothing}
-    command::String
-    arguments::Union{Expr, Nothing}
-    filter::Union{Expr, Nothing}
-    use::String
-    options::Dict{String,String}
-end
-
-# mutable struct Block
-#     s::String
-#     type::BlockType
-# end
 
 # These keywords denote end of blocks
 block_delimiters = ["if", "in", "using"]
@@ -189,7 +172,7 @@ function parse(s::Stream)
     else 
         # it's the main part of the command
         # no prefix
-        prefix = nothing
+        prefix = Prefix(nothing, nothing)
         command, arguments = parse_main(strip(str))
     end
 
@@ -199,7 +182,7 @@ function parse(s::Stream)
             # options 
             str, delimiter = get_block(s)
             filter = nothing
-            use = ""
+            use = nothing
             options = parse_options(str)
             if delimiter != :block_delimiter_eol 
                 # we don't allow any extra block after the options
@@ -211,7 +194,7 @@ function parse(s::Stream)
             str, delimiter = get_block(s)
             if old_delimiter == :block_delimiter_if
                 filter = Meta.parse(str)
-                use = ""
+                use = nothing
             elseif old_delimiter == :block_delimiter_in
                 error("Douglass: parse error: `in` block is currently not supported.")
             elseif old_delimiter == :block_delimiter_using
@@ -231,18 +214,20 @@ function parse(s::Stream)
                 error("Douglass: parse error: unexpected keyword.\n$(flush_and_indicate(s))")
             else
                 # no options
-                options = Dict{String,String}()
+                options = nothing
             end
         end
     else # no if/in/using or options after the main command
         filter = nothing 
-        use = ""
-        options = Dict{String,String}()
+        use = nothing
+        options = nothing
     end
 
     println("Debug output:")
-    println("Prefix:")
-    @show prefix 
+    println("By:")
+    @show prefix.by
+    println("Sort:")
+    @show prefix.sort
     println("Command:")
     @show command 
     println("Arguments:")
@@ -254,7 +239,7 @@ function parse(s::Stream)
     println("Options:")
     @show options 
     
-    return Command(prefix, command, arguments, filter, use, options)
+    return Command(prefix.by, prefix.sort, command, arguments, filter, use, options)
 
 end
 
@@ -335,16 +320,8 @@ end
 # Stuff before the first ": " is considered the prefix
 # Stuff after the first 
 function parse(str::AbstractString)
-
-    # some rules:
-    # we can always insert a space before and after ","
-    # we 
-
     stream = Stream(str, 1)
     cmd = parse(stream)
-
-
-
 end
 
 
