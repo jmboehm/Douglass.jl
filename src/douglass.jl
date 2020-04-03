@@ -42,7 +42,9 @@ module Douglass
     include("commands/drop.jl")
     include("commands/keep.jl")
     include("commands/sort.jl")
-    
+    include("commands/generate.jl")
+
+    include("helper.jl")
 
     global active_df
 

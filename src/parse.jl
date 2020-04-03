@@ -95,8 +95,8 @@ function get_word(s::Stream)
             delimiter = delimiter_symbol("//")
             parse_next(s)
             break
-        elseif length(open_parentheses) == 0 && c == ':' && parse_peek(s) == ' '
-            # enf of the prefix
+        elseif length(open_parentheses) == 0 && c == ':' && !parse_eof(s) && parse_peek(s) == ' '
+            # end of the prefix
             delimiter = delimiter_symbol(": ")
             parse_next(s)
             break
@@ -223,7 +223,8 @@ function parse(s::Stream)
         options = nothing
     end
 
-    println("Debug output:")
+    println("***************************************************************")
+    println("Parser debug output:")
     println("By:")
     @show prefix.by
     println("Sort:")
@@ -238,6 +239,7 @@ function parse(s::Stream)
     @show use 
     println("Options:")
     @show options 
+    println("***************************************************************")
     
     return Command(prefix.by, prefix.sort, command, arguments, filter, use, options)
 
@@ -258,12 +260,12 @@ function parse_prefix(str::AbstractString)
                 # assert format (<varlist>)
                 (str[end] == ')') || error("Douglass: parse error: error parsing prefix. expecting ')'.\n$(flush_and_indicate(s))")
                 vars = split(str[2:end-1]," ")
-                sortvars = Symbol.(vars[.!isempty.(vars)])
+                sortvars = Symbol.(stripcolon.(vars[.!isempty.(vars)]))
                 (delimiter == :delimiter_eof) || error("Douglass: parse error: error parsing prefix. expected end of line after ')'.\n$(flush_and_indicate(s))")
                 break
             else
                 # we're still in the 'by' part
-                !isempty(strip(str)) && push!(byvars, Symbol(strip(str)))
+                !isempty(strip(str)) && push!(byvars, Symbol(stripcolon(strip(str))))
             end
         end
         !isempty(sortvars) || error("Douglass: parse error: error parsing prefix. `bysort` expects a list of variables to sort by.\n$(flush_and_indicate(s))")
@@ -273,13 +275,16 @@ function parse_prefix(str::AbstractString)
         while delimiter == :delimiter_whitespace
             str, delimiter = get_word(s)
             (str[1] != '(') || error("Douglass: parse error: `by` does not allow sorting. use `bysort`.\n$(flush_and_indicate(s))")
-            !isempty(strip(str)) && push!(byvars, Symbol(strip(str)))
+            !isempty(strip(str)) && push!(byvars, Symbol(stripcolon(strip(str))))
         end
     else 
         error("Douglass: parse error: error parsing prefix. prefix must be `by` or `bysort`.\n$(flush_and_indicate(s))")
     end
     return Prefix(byvars, sortvars)
 end
+# This function parses the <command> <arguments> part of the string.
+# if the arguments are a sequence of strings separated by whitespaces where each of the strings starts with a ':', it's interpreted
+# as a varlist and returned as a Vector{Symbol}, otherwise as an Expr
 function parse_main(str::AbstractString)
 
     s = split(strip(str), " ", limit=2)
@@ -290,7 +295,16 @@ function parse_main(str::AbstractString)
     else
         # command + arguments
         command = s[1]
-        arguments = Meta.parse(s[2])
+        # remove all empty strings
+        args = split(strip(s[2]), " ")
+        args = args[.!(isempty.(args))]
+        if all([args[i][1] == ':' for i=1:size(args,1)])
+            # looks like it's a varlist... parse as Vector{Symbol}
+            arguments = Symbol.([args[i][2:end] for i=1:size(args,1)])
+        else
+            # parse as Expr
+            arguments = Meta.parse(s[2])
+        end
     end
 
     return command, arguments

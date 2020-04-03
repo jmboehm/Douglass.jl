@@ -25,6 +25,11 @@ df = dataset("datasets", "iris")
 Douglass.@generate!(df, :mysum, :SepalLength + :SepalWidth, :PetalLength .> 1.3)
 @assert maximum(skipmissing(abs.(df.mysum .- (df.SepalLength .+ df.SepalWidth) ))) < 1e-4
 
+# @gen! (expression with by and if)
+df = dataset("datasets", "iris")
+Douglass.@generate_byrow!(df, [:Species], [:SepalLength], :mysum, Float64, :SepalLength[i] + :SepalWidth[i], :PetalLength[i] .> 1.3)
+@assert maximum(skipmissing(abs.(df.mysum .- (df.SepalLength .+ df.SepalWidth) ))) < 1e-4
+
 # @replace! (expression)
 df = dataset("datasets", "iris")
 Douglass.@replace!(df, :SepalLength, 1.0)
@@ -107,10 +112,19 @@ df = dataset("datasets", "iris")
 
 Douglass.set_active_df(:df)
 
+d"by :Species : generate :x = :SepalWidth + :PetalLength"
+
+d"bysort :Species (:SepalLength) : generate :x = :SepalWidth + :PetalLength if :PetalLength .> 1.3"
+
+
 Douglass.@use(df)
 Douglass.@use df
 
-d"testme [:SepalLength, :SepalWidth]"
+d" drop :SepalWidth :SepalLength"
+d" drop  :SepalWidth "
+d" drop  :SepalWidth :"
+
+d"drop [:SepalLength, :SepalWidth]"
 
 d"drop [:SepalLength, :SepalWidth]"
 
@@ -126,15 +140,8 @@ df = dataset("datasets", "iris")
 d"by mygroup1 mygroup2: egen :var = mean(:othervar) if thirdvar .== 5, missing"
 d"egen"
 
-module Mymodule
-    macro mymacro()
-        println("we are in mymacro!")
-    end
-end
+a = :(:x = :SepalWidth + :PetalLength)
 
-macro callmymacro()
-    println("i'm returning the call to my macro now...")
-    return Expr(:macrocall, Expr(:., :Mymodule, QuoteNode(Symbol("@mymacro"))),  @__LINE__)
-end
+@with(df, :SepalWidth[1] + :PetalLength[1] )
 
 dump(:(Mymodule.@mymacro) )

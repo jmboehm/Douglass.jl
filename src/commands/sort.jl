@@ -2,7 +2,7 @@
 macro sort(t::Symbol, 
     by::Union{Vector{Symbol}, Nothing}, 
     sort::Union{Vector{Symbol}, Nothing}, 
-    arguments::Union{Expr, Nothing}, 
+    arguments::Union{Vector{Symbol},Union{Expr, Nothing}}, 
     filter::Union{Expr, Nothing}, 
     use::Union{String, Nothing}, 
     options::Union{Expr, Nothing})
@@ -12,8 +12,8 @@ macro sort(t::Symbol,
     """)
 end
 
-# this is `keep <varlist>`
-macro sort(t::Symbol, by::Nothing, sort::Nothing, arguments::Expr, filter::Nothing, use::Nothing, options::Nothing)
+# this is `sort <varlist>`
+macro sort(t::Symbol, by::Nothing, sort::Nothing, arguments::Vector{Symbol}, filter::Nothing, use::Nothing, options::Nothing)
     return esc(
         quote 
             Douglass.@sort!($t, $arguments)
@@ -21,7 +21,7 @@ macro sort(t::Symbol, by::Nothing, sort::Nothing, arguments::Expr, filter::Nothi
     )
 end
 
-macro sort!(t::Symbol, varlist::Expr)
+macro sort!(t::Symbol, varlist::Vector{Symbol})
     esc(
         quote
             # check that all variables are present

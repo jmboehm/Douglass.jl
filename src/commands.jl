@@ -32,31 +32,8 @@ macro rename!(t::Symbol, var, to)
     )
 end
 
-macro generate!(t,varname,ex,filter)
-    esc(
-        quote
-            if $varname ∈ names($t)
-                error("Table already has a column with this name.")
-            end
-            local x = @with($t, ifelse.($filter, $ex , missing))
-            # if we have a scalar, broadcast
-            if size(x,1) == 1
-                $t[!,$varname] .= x
-            else 
-                $t[!,$varname] = x
-            end
-        end
-    )
-end
 
-macro generate_byrow!(t, varname, ex)
 
-end
-
-# @generate! without if-filter
-macro generate!(t,varname,ex)
-    return esc( :( Douglass.@generate!($t,$varname,$ex,true) )  )
-end
 
 macro replace!(t,varname,ex)
     esc(
@@ -96,7 +73,7 @@ macro assert_varlist(t::Symbol, varlist::Expr)
     )
 end
     
-# asserts that varlist evaluates to a Vector{Symbol} and checks that all Symbols are column names in t.
+# asserts that varlist::Expr evaluates to a Vector{Symbol} and checks that all Symbols are column names in t.
 macro assert_vars_present(t::Symbol, varlist::Expr)
     esc(
         quote
@@ -104,8 +81,19 @@ macro assert_vars_present(t::Symbol, varlist::Expr)
             Douglass.@assert_varlist($t, $varlist)
             # check that they're present
             for v in $varlist
-                (v ∈ names($t)) || error("$(v) not a column name in $(t)")
+                (v ∈ names($t)) || error("$(v) not a column name in the active DataFrame")
             end
+            true
+        end
+    )
+end
+
+# Checks that all Symbols are column names in t.
+macro assert_vars_present(t::Symbol, varlist::Vector{Symbol})
+    esc(
+        quote
+            # check that they're present
+            ($varlist ⊆ names($t)) || error("$($varlist) is not a subset of the columns in the active DataFrame")
             true
         end
     )
@@ -146,67 +134,7 @@ macro transform!(t::Symbol, varlist_by::Expr, varlist_sort::Expr, assigned_var, 
 end
 
 
-# this is a version that uses @byrow! Has the advantage that we don't need to use vectorized syntax, but not much else
-macro generate_byrow!(t::Symbol, varlist_by::Expr, varlist_sort::Expr, assigned_var, assigned_var_type::Expr, transformation::Expr, filter::Expr, arguments::Expr)
-    esc(
-        quote
-            # create arguments in a local scope
-            args = $arguments
 
-            # check variable is not present
-            ($(assigned_var) ∉ names($t)) || error("Variable $(assigned_var) already present in DataFrame.")
-
-            # this is the function that maps every sub-df into its transformed df
-            my_f = _df -> @byrow! _df begin
-                @newcol $assigned_var::Array{Union{$assigned_var_type, Missing},1}
-                $(assigned_var) = $(transformation)
-            end
-            $t = by($t, $varlist_by, my_f )
-            $t
-        end
-    )
-end
-
-# alternative version, doing stuff by row using @with (which has the advantage that we can use "[i]" syntax)
-# todo: 
-#   allow _n 
-#   assume that user means [i] if no index is shown (in transformation and filter)
-macro gen_byrow2!(t::Symbol, varlist_by::Expr, varlist_sort::Expr, assigned_var, assigned_var_type, transformation::Expr, filter, arguments::Expr)
-    esc(
-        quote
-            # create arguments in a local scope
-            #args = $arguments
-
-            # check that assigned_var_type is a valid type
-            isa($(assigned_var_type),DataType) || error("assigned_var_type must be a DataType")
-
-            # check variable is not present
-            ($(assigned_var) ∉ names($t)) || error("Variable $(assigned_var) already present in DataFrame.")
-            $t[!,$(assigned_var)] = missings($assigned_var_type,size($t,1))
-
-            # sort, if we need to, (first by-variables, then sort-variables)
-            if !isempty($(varlist_sort))
-                sort!($t, vcat($varlist_by, $varlist_sort))
-            end
-
-            # this is the function that maps every sub-df into its transformed df
-            my_f = _df -> @with _df begin
-                # fill the new variable, row by row
-                for i in 1:size(_df,1)
-                    if ($filter)  # if condition is not satisfied, leave with missing
-                        $(assigned_var)[i] = $(transformation)
-                    end
-                end
-                _df
-            end
-            # execute, and copy it to another dataframe, 
-            # otherwise we get copies of the group variables in there as well
-            t2 = by($t, $varlist_by, my_f )
-            $t[!,$(assigned_var)] = t2[!,$(assigned_var)]
-            $t
-        end
-    )
-end
 
 macro transform_byrow!(t::Symbol, varlist_by::Expr, varlist_sort::Expr, assigned_var, transformation::Expr, filter::Expr, arguments::Expr)
     esc(

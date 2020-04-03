@@ -2,10 +2,10 @@
 macro keep(t::Symbol, 
     by::Union{Vector{Symbol}, Nothing}, 
     sort::Union{Vector{Symbol}, Nothing}, 
-    arguments::Union{Expr, Nothing}, 
+    arguments::Union{Vector{Symbol},Union{Expr, Nothing}}, 
     filter::Union{Expr, Nothing}, 
     use::Union{String, Nothing}, 
-    options::Union{Expr, Nothing})
+    options::Union{Dict{String,String}, Nothing})
     error("""\n
         The syntax is:
             keep <varlist>
@@ -15,7 +15,7 @@ macro keep(t::Symbol,
 end
 
 # this is `keep <varlist>`
-macro keep(t::Symbol, by::Nothing, sort::Nothing, arguments::Expr, filter::Nothing, use::Nothing, options::Nothing)
+macro keep(t::Symbol, by::Nothing, sort::Nothing, arguments::Vector{Symbol}, filter::Nothing, use::Nothing, options::Nothing)
     return esc(
         quote 
             Douglass.@keep_var!($t, $arguments)
@@ -32,6 +32,7 @@ macro keep(t::Symbol, by::Nothing, sort::Nothing, arguments::Nothing, filter::Ex
     )
 end
 
+# TODO add a version that allows for Vector{Symbol} arguments
 
 # @keep_var! <varlist>
 macro keep_var!(t::Symbol,varlist::Expr)

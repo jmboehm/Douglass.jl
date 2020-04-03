@@ -3,7 +3,7 @@
 macro drop(t::Symbol, 
     by::Union{Vector{Symbol}, Nothing}, 
     sort::Union{Vector{Symbol}, Nothing}, 
-    arguments::Union{Expr, Nothing}, 
+    arguments::Union{Vector{Symbol},Union{Expr, Nothing}}, 
     filter::Union{Expr, Nothing}, 
     use::Union{String, Nothing}, 
     options::Union{Expr, Nothing})
@@ -16,7 +16,7 @@ macro drop(t::Symbol,
 end
 
 # this is `drop <varlist>`
-macro drop(t::Symbol, by::Nothing, sort::Nothing, arguments::Expr, filter::Nothing, use::Nothing, options::Nothing)
+macro drop(t::Symbol, by::Nothing, sort::Nothing, arguments::Union{Vector{Symbol},Expr}, filter::Nothing, use::Nothing, options::Nothing)
     return esc(
         quote 
             Douglass.@drop_var!($t, $arguments)
@@ -34,7 +34,23 @@ macro drop(t::Symbol, by::Nothing, sort::Nothing, arguments::Nothing, filter::Ex
 end
 
 # @drop_var! <varlist>
-macro drop_var!(t::Symbol,varlist::Expr)
+# TODO: check whether it would be faster to drop all in one go
+macro drop_var!(t::Symbol, varlist::Vector{Symbol})
+    esc(
+        quote
+            # check that all variables are present
+            Douglass.@assert_vars_present($t, $varlist)
+            # remove them all
+            for v in $varlist
+                select!($t, Not(v))
+            end
+            $t
+        end
+    )
+end
+
+# @drop_var! <varlist>
+macro drop_var!(t::Symbol, varlist::Expr)
     esc(
         quote
             # check that <varlist> is a Vector{Symbol}
@@ -46,6 +62,7 @@ macro drop_var!(t::Symbol,varlist::Expr)
             for v in $varlist
                 select!($t, Not(v))
             end
+            $t
         end
     )
 end
