@@ -106,16 +106,35 @@ s = Stream(str, 1)
 str, del = get_block(s)
 p = parse_prefix(str)
 
+# some tests
+
 include("src/Douglass.jl")
-
 df = dataset("datasets", "iris")
-
 Douglass.set_active_df(:df)
-
 d"by :Species : generate :x = :SepalWidth + :PetalLength"
-
+@test (:x ∈ names(df))
+@test df[1,:x] ≈ 4.9 atol = 1e-4
+select!(df, Not(:x))    # this drops the column, and we can re-start
 d"bysort :Species (:SepalLength) : generate :x = :SepalWidth + :PetalLength if :PetalLength .> 1.3"
-
+@test ismissing(df[1,:x])
+@test sum(skipmissing(df.x)) ≈ 972.3 atol = 1e-4
+#select!(df, Not(:x)) 
+d"bysort :Species (:SepalLength) : generate :y = 99 if :PetalLength .> 1.3"
+@test (eltype(df.y) == Union{Missing, Int64})
+# this should keep :y as a Int64
+d"bysort :Species (:SepalLength) : replace :y = 99.0 if :SepalLength > 7.8"
+@test (eltype(df.y) == Union{Missing, Int64})
+select!(df, Not(:y))
+# Test the generate without by/bysort
+d"gen :z = 1.0"
+@test (:z ∈ names(df))
+@test df[1,:z] == 1.0
+select!(df, Not(:z))
+d"generate :z = :SepalWidth + :PetalLength"
+@test sum(skipmissing(df.z)) ≈ 1022.3  atol = 1e-4
+select!(df, Not(:z))
+d"gen :z = :SepalWidth + :PetalLength if :PetalWidth > 1.8"
+@test sum(skipmissing(df.z)) ≈ 295.9  atol = 1e-4
 
 Douglass.@use(df)
 Douglass.@use df

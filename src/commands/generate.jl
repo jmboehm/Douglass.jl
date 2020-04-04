@@ -1,10 +1,16 @@
 #
 # `generate`
+#
+# Creates a new variable in the DataFrame. Operates row-by-row, therefore operators on scalars are 
+# expected. Rows for which the `filter` condition is not met are assigned `missing`.
 # 
 # Differences to Stata:
 #   - The current observation is denoted by `i` instead of `_n`, e.g. `:varname[i]` instead of `:varname[_n]`
+#   - Explicit types are currently not supported. The new variable takes a type that is the result of the
+#       evaluated expression in the first row.
 #
-# Like in Stata, refering to a variable by `:varname` implicitly means the current row: `:varname[i]`
+# Like in Stata, refering to a variable by `:varname` implicitly means the current row: `:varname[i]`.
+#
 #
 # this is the general form of the command
 macro generate(t::Symbol, 
@@ -32,7 +38,7 @@ macro gen(t::Symbol,
     options::Union{Dict{String,String}, Nothing})
     return esc(
         quote
-            @generate(t, by, sort, arguments, filter, use, options)
+            Douglass.@generate($t, $by, $sort, $arguments, $filter, $use, $options)
         end
     )
 end
@@ -51,6 +57,21 @@ macro generate(t::Symbol,
     )
 end
 
+# this is the specific vesion that leads to generate's that are without `by`/`bysort`
+macro generate(t::Symbol, 
+    by::Nothing, 
+    sort::Union{Vector{Symbol}, Nothing}, 
+    arguments::Expr, 
+    filter::Union{Expr, Nothing}, 
+    use::Nothing, 
+    options::Nothing)
+    return esc(
+        quote
+            Douglass.@generate!($t, $sort, $arguments, $filter)
+        end
+    )
+end
+
 macro generate_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union{Vector{Symbol}, Nothing}, arguments::Expr, filter::Union{Expr, Nothing}, options::Union{Dict{String,String}, Nothing})
     # assert that `arguments` is an assignment
     (arguments.head == :(=)) || error("`generate` expects an assignment operation, e.g. :x = :y + :z")
@@ -62,12 +83,12 @@ macro generate_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union
     # and the QuoteNode
     assigned_var_qn = arguments.args[1].args[1]
     
-    # if the RHS of the assignment expression is not an expression, make it one
-    transformation = isexpr(arguments.args[2]) ? arguments.args[2] : Expr(arguments.args[2])
+    # if the RHS of the assignment expression is currently a symbol, make it an Expr
+    transformation = (typeof(arguments.args[2]) == Symbol) ? Expr(arguments.args[2]) : arguments.args[2]
     return esc(
         quote
             # check variable is not present
-            ($(assigned_var) ∉ names($t)) || error("Variable $($(assigned_var)) already present in DataFrame.")
+            ($(assigned_var_qn) ∉ names($t)) || error("Variable $($(assigned_var_qn)) already present in DataFrame.")
             
             # sort, if we need to, (first by-variables, then sort-variables)
             if !isnothing($(varlist_sort)) && !isempty($(varlist_sort))
@@ -75,7 +96,7 @@ macro generate_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union
             end
             #determine type of resulting column from the type of the first element
             assigned_var_type = eltype([@with($t,$(transformation)) for i=1])
-            $t[!,$(assigned_var)] = missings(assigned_var_type,size($t,1))
+            $t[!,$(assigned_var_qn)] = missings(assigned_var_type,size($t,1))
 
             # this is the function that maps every sub-df into its transformed df
             my_f = _df -> @with _df begin
@@ -90,8 +111,54 @@ macro generate_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union
             # execute, and copy it to another dataframe, 
             # otherwise we get copies of the group variables in there as well
             t2 = by($t, $varlist_by, my_f )
-            $t[!,$(assigned_var)] = missings(eltype(t2[!,$(assigned_var)]),size($t,1))
-            $t[!,$(assigned_var)] = t2[!,$(assigned_var)]
+            $t[!,$(assigned_var_qn)] = missings(eltype(t2[!,$(assigned_var_qn)]),size($t,1))
+            $t[!,$(assigned_var_qn)] = t2[!,$(assigned_var_qn)]
+            $t
+        end
+    )
+end
+
+# version without `by`
+macro generate!(t::Symbol, 
+    varlist_sort::Union{Vector{Symbol}, Nothing}, 
+    arguments::Expr, 
+    filter::Union{Expr, Nothing})
+
+    # assert that `arguments` is an assignment
+    (arguments.head == :(=)) || error("`generate` expects an assignment operation, e.g. :x = :y + :z")
+    # replace :varname by :varname[i] if not referenced
+    Douglass.ref_quotenodes!(arguments)
+    !isnothing(filter) && Douglass.ref_quotenodes!(filter)
+    # get the assigned var symbol (note that it's in a QuoteNode)
+    assigned_var = arguments.args[1].args[1].value
+    # and the QuoteNode
+    assigned_var_qn = arguments.args[1].args[1]
+    
+    # if the RHS of the assignment expression is currently a symbol, make it an Expr
+    transformation = (typeof(arguments.args[2]) == Symbol) ? Expr(arguments.args[2]) : arguments.args[2]
+    return esc(
+        quote
+            # check variable is not present
+            ($(assigned_var_qn) ∉ names($t)) || error("Variable $($(assigned_var_qn)) already present in DataFrame.")
+            
+            # sort, if we need to, (first by-variables, then sort-variables)
+            if !isnothing($(varlist_sort)) && !isempty($(varlist_sort))
+                sort!($t, $varlist_sort)
+            end
+
+            #determine type of resulting column from the type of the first element
+            assigned_var_type = eltype([@with($t,$(transformation)) for i=1])
+            $t[!,$(assigned_var_qn)] = missings(assigned_var_type,size($t,1))
+
+            @with $t begin
+                # fill the new variable, row by row
+                for i in 1:size($t,1)
+                    if (isnothing($filter) ? true : $filter)  # if condition is not satisfied, leave with missing
+                        $(assigned_var_qn)[i] = $(transformation)
+                    end
+                end
+                $t
+            end
             $t
         end
     )
@@ -156,9 +223,9 @@ end
 # end
 
 # @generate! without if-filter
-macro generate!(t,varname,ex)
-    return esc( :( Douglass.@generate!($t,$varname,$ex,true) )  )
-end
+# macro generate!(t,varname,ex)
+#     return esc( :( Douglass.@generate!($t,$varname,$ex,true) )  )
+# end
 
 
 # # this is an alternative version that uses @byrow! Has the advantage that we don't need to use vectorized syntax, but not much else

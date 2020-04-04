@@ -43,6 +43,7 @@ module Douglass
     include("commands/keep.jl")
     include("commands/sort.jl")
     include("commands/generate.jl")
+    include("commands/replace.jl")
 
     include("helper.jl")
 
