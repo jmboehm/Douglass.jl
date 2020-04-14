@@ -315,6 +315,14 @@ d"replace :x = _n + 10 if _n<3 "
 
 
 
+include("src/Douglass.jl")
+df = dataset("datasets", "iris")
+Douglass.set_active_df(:df)
+
+d"rename :SepalLength :SomethingBetter"
+
+# Examples from the Readme.md
+
 using Douglass, RDatasets
 include("src/Douglass.jl")
 df = dataset("datasets", "iris")

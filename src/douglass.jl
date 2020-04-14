@@ -4,7 +4,8 @@
 # @merge! x:x <varlist> using <df2>
 # @reshape! <type> <varlist> , i(<varlist>) j(<varlist>)
 #
-# Also need to make @gen and @replace <if>-able
+# @gen is probably suffering from type instability
+# @egen is still really crap. It should expect a type (e.g. `egen Float64 :x = ...`)
 
 # Nice to have, but not necessary for first version:
 # @assert <condition>
@@ -44,6 +45,7 @@ module Douglass
     include("commands/sort.jl")
     include("commands/generate.jl")
     include("commands/replace.jl")
+    include("commands/rename.jl")
     include("commands/egen.jl")
 
     include("helper.jl")
