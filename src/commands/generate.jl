@@ -19,7 +19,7 @@ macro generate(t::Symbol,
     arguments::Union{Vector{Symbol},Union{Expr, Nothing}}, 
     filter::Union{Expr, Nothing}, 
     use::Union{String, Nothing}, 
-    options::Union{Dict{String,String}, Nothing})
+    options::Union{Dict{String,Any}, Nothing})
     error("""\n
         The syntax is:
             generate <expression> [if] <expression>
@@ -35,7 +35,7 @@ macro gen(t::Symbol,
     arguments::Union{Vector{Symbol},Union{Expr, Nothing}}, 
     filter::Union{Expr, Nothing}, 
     use::Union{String, Nothing}, 
-    options::Union{Dict{String,String}, Nothing})
+    options::Union{Dict{String,Any}, Nothing})
     return esc(
         quote
             Douglass.@generate($t, $by, $sort, $arguments, $filter, $use, $options)
@@ -49,7 +49,7 @@ macro generate(t::Symbol,
     arguments::Expr, 
     filter::Union{Expr, Nothing}, 
     use::Nothing, 
-    options::Union{Dict{String,String}, Nothing})
+    options::Union{Dict{String,Any}, Nothing})
     return esc(
         quote
             Douglass.@generate_byrow!($t, $by, $sort, $arguments, $filter, $options )
@@ -72,7 +72,7 @@ macro generate(t::Symbol,
     )
 end
 
-macro generate_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union{Vector{Symbol}, Nothing}, arguments::Expr, filter::Union{Expr, Nothing}, options::Union{Dict{String,String}, Nothing})
+macro generate_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union{Vector{Symbol}, Nothing}, arguments::Expr, filter::Union{Expr, Nothing}, options::Union{Dict{String,Any}, Nothing})
     # assert that `arguments` is an assignment
     (arguments.head == :(=)) || error("`generate` expects an assignment operation, e.g. :x = :y + :z")
     # replace :varname by :varname[i] if not referenced
@@ -84,7 +84,11 @@ macro generate_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union
     assigned_var_qn = arguments.args[1].args[1]
     
     # if the RHS of the assignment expression is currently a symbol, make it an Expr
-    transformation = (typeof(arguments.args[2]) == Symbol) ? Expr(arguments.args[2]) : arguments.args[2]
+    #transformation = (typeof(arguments.args[2]) == Symbol) ? Expr(arguments.args[2]) : arguments.args[2]
+    transformation = arguments.args[2]
+    # return `nothing`s in case the index is < 1
+    isexpr(transformation) && replace_invalid_indices!(transformation)
+
     return esc(
         quote
             # check variable is not present
@@ -95,15 +99,17 @@ macro generate_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union
                 sort!($t, vcat($varlist_by, $varlist_sort))
             end
             #determine type of resulting column from the type of the first element
-            assigned_var_type = eltype([@with($t,$(transformation)) for i=1])
+            assigned_var_type = eltype([@with($t,$(transformation)) for _n=1])
             $t[!,$(assigned_var_qn)] = missings(assigned_var_type,size($t,1))
 
             # this is the function that maps every sub-df into its transformed df
             my_f = _df -> @with _df begin
+                # define _N 
+                _N = size(_df, 1)
                 # fill the new variable, row by row
-                for i in 1:size(_df,1)
+                for _n in 1:size(_df,1)
                     if (isnothing($filter) ? true : $filter)  # if condition is not satisfied, leave with missing
-                        $(assigned_var_qn)[i] = $(transformation)
+                        $(assigned_var_qn)[_n] = $(transformation)
                     end
                 end
                 _df
@@ -129,13 +135,31 @@ macro generate!(t::Symbol,
     # replace :varname by :varname[i] if not referenced
     Douglass.ref_quotenodes!(arguments)
     !isnothing(filter) && Douglass.ref_quotenodes!(filter)
-    # get the assigned var symbol (note that it's in a QuoteNode)
-    assigned_var = arguments.args[1].args[1].value
-    # and the QuoteNode
-    assigned_var_qn = arguments.args[1].args[1]
-    
+    # get the assigned var symbol and QuoteNode 
+    @show arguments.args[1]
+    if isa(arguments.args[1], Symbol)
+        assigned_var_qn = QuoteNode(arguments.args[1])
+    elseif isexpr(arguments.args[1]) && (arguments.args[1].head == :$)
+        # interpolate
+        # Now this becomes a Symbol
+        assigned_var_qn = arguments.args[1].args[1] # ")  #QuoteNode(arguments.args[1].args[1]) #
+        
+    elseif isa(arguments.args[1].args[1], QuoteNode)
+        #assigned_var = arguments.args[1].args[1].value
+        # and the QuoteNode
+        assigned_var_qn = arguments.args[1].args[1]
+    else
+        error("Assigned variable must be referenced using the colon syntax, e.g. :x.")
+    end
+    @show assigned_var_qn
+
     # if the RHS of the assignment expression is currently a symbol, make it an Expr
-    transformation = (typeof(arguments.args[2]) == Symbol) ? Expr(arguments.args[2]) : arguments.args[2]
+    #transformation = (typeof(arguments.args[2]) == Symbol) ? Expr(arguments.args[2]) : arguments.args[2]
+    transformation = arguments.args[2]
+    # return `nothing`s in case the index is < 1
+    @show transformation
+    isexpr(transformation) && replace_invalid_indices!(transformation)
+
     return esc(
         quote
             # check variable is not present
@@ -147,14 +171,18 @@ macro generate!(t::Symbol,
             end
 
             #determine type of resulting column from the type of the first element
-            assigned_var_type = eltype([@with($t,$(transformation)) for i=1])
+            assigned_var_type = eltype([@with($t,$(transformation)) for _n=1])
             $t[!,$(assigned_var_qn)] = missings(assigned_var_type,size($t,1))
 
             @with $t begin
+                # define _N 
+                _N = size($t, 1)
                 # fill the new variable, row by row
-                for i in 1:size($t,1)
+                for _n in 1:size($t,1)
                     if (isnothing($filter) ? true : $filter)  # if condition is not satisfied, leave with missing
-                        $(assigned_var_qn)[i] = $(transformation)
+                        $(assigned_var_qn)[_n] = $(transformation)
+                        # This is what needs to be used if the assigned_var_qn is a Symbol
+                        #$t[_n, $(assigned_var_qn)] = $(transformation)
                     end
                 end
                 $t

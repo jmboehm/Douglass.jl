@@ -1,5 +1,7 @@
 using Revise
 using RDatasets, Test
+using DataFramesMeta 
+using DataFrames
 
 include("src/Douglass.jl")
 
@@ -111,6 +113,43 @@ p = parse_prefix(str)
 include("src/Douglass.jl")
 df = dataset("datasets", "iris")
 Douglass.set_active_df(:df)
+
+# 0) `gen` without anything else
+d"generate :x = 1.0"
+@test all(df.x .== 1.0)
+select!(df, Not(:x))
+d"generate :x = :SepalLength"
+@test all(df.x .== df.SepalLength)
+select!(df, Not(:x))
+d"generate :x = :SepalWidth + :PetalLength"
+@test (:x ∈ names(df))
+@test df[1,:x] ≈ 4.9 atol = 1e-4
+select!(df, Not(:x))    # this drops the column, and we can re-start
+d"generate :x = :SepalWidth + :PetalLength if :PetalLength .> 1.3"
+@test all((df.x .== df.SepalWidth .+ df.PetalLength) .| (df.PetalLength .<= 1.3))
+@test sum(skipmissing(df.x)) ≈ 972.3 atol = 1e-4
+#select!(df, Not(:x)) 
+d"generate :y = 99 if :PetalLength .> 1.3"
+@test (eltype(df.y) == Union{Missing, Int64})
+d"generate :x2 = _n"
+@test (df.x2[1] == 1) && (df.x2[end] == 150)
+select!(df, Not(:x2))
+# can we use stuff from julia?
+d"generate :z = rand(Float64)"
+
+
+
+# 1) `gen` with `bysort` ****************
+include("src/Douglass.jl")
+df = dataset("datasets", "iris")
+Douglass.set_active_df(:df)
+
+d"by :Species : generate :x = 1.0"
+@test all(df.x .== 1.0)
+select!(df, Not(:x))
+d"by :Species : generate :x = :SepalLength"
+@test all(df.x .== df.SepalLength)
+select!(df, Not(:x))
 d"by :Species : generate :x = :SepalWidth + :PetalLength"
 @test (:x ∈ names(df))
 @test df[1,:x] ≈ 4.9 atol = 1e-4
@@ -121,11 +160,18 @@ d"bysort :Species (:SepalLength) : generate :x = :SepalWidth + :PetalLength if :
 #select!(df, Not(:x)) 
 d"bysort :Species (:SepalLength) : generate :y = 99 if :PetalLength .> 1.3"
 @test (eltype(df.y) == Union{Missing, Int64})
+d"by :Species : generate :x2 = _n"
+@test (df.x2[1] == 1) && (df.x2[end] == 50)
+select!(df, Not(:x2))
 # this should keep :y as a Int64
 d"bysort :Species (:SepalLength) : replace :y = 99.0 if :SepalLength > 7.8"
 @test (eltype(df.y) == Union{Missing, Int64})
+d"gen :z = 0.0"
+d"bysort :Species (:SepalLength) : replace :z = :x[_n - 2]"
+sort!(df, [:Species, :SepalLength])
 select!(df, Not(:y))
 # Test the generate without by/bysort
+select!(df, Not(:z))
 d"gen :z = 1.0"
 @test (:z ∈ names(df))
 @test df[1,:z] == 1.0
@@ -135,6 +181,14 @@ d"generate :z = :SepalWidth + :PetalLength"
 select!(df, Not(:z))
 d"gen :z = :SepalWidth + :PetalLength if :PetalWidth > 1.8"
 @test sum(skipmissing(df.z)) ≈ 295.9  atol = 1e-4
+d"gen :z2 = _n"
+d"drop :z2"
+@test :z2 ∉ names(df)
+d"gen :z2 = :SepalLength"
+
+
+
+# *******************
 
 Douglass.@use(df)
 Douglass.@use df
@@ -164,3 +218,114 @@ a = :(:x = :SepalWidth + :PetalLength)
 @with(df, :SepalWidth[1] + :PetalLength[1] )
 
 dump(:(Mymodule.@mymacro) )
+
+
+
+# string interpolation
+include("src/Douglass.jl")
+df = dataset("datasets", "iris")
+Douglass.set_active_df(:df)
+
+name = "myone"
+d"gen :$$name = 1.0"
+d"gen :$$(name) = 1.0"
+
+m"gen :x = $(one)"
+
+name = :x
+d"gen $name = :SepalLength"
+
+
+
+d"gen :x = :SepalLength"
+
+str = raw"gen :x = $(one) "
+ r
+
+name = :SepalLength
+
+d"gen :name = $name"
+
+macro e_str(s)
+    esc(Meta.parse("\"$(escape_string(s))\""))
+end
+a = e"$(one)"
+
+a = Meta.parse("\"$(escape_string(str))\"")
+
+
+# ***************
+# egen with by and if
+include("src/Douglass.jl")
+df = dataset("datasets", "iris")
+Douglass.set_active_df(:df)
+using Statistics
+
+d"gen :row = _n"
+d"bysort :Species (:SepalLength) : egen :x = mean(:PetalWidth) if :SepalWidth .< 3.4"
+sort!(df, :row)
+
+d"drop :x"
+d"bysort :Species (:SepalLength) : egen :x = :SepalLength if :SepalWidth .< 3.4"
+
+d"bysort :Species (:SepalLength) : egen :x = 1.0 if :SepalWidth .< 3.4"
+
+e = :(:SepalLength .+ :SepalWidth )
+dump(e)
+
+d"bysort :Species (:SepalLength) : egen :x = :SepalLength .+ mean(:PetalLength) if :PetalWidth .> 2.0"
+
+# egen with by but not if
+include("src/Douglass.jl")
+df = dataset("datasets", "iris")
+Douglass.set_active_df(:df)
+using Statistics
+
+d"bysort :Species (:SepalLength) : egen :x = mean(:PetalWidth)"
+
+# speed test
+
+vecr1 = rand(Float64, 1_000_000)
+vecr2 = rand(Float64, 1_000_000)
+vecr3 = Int64.(floor.(100.0 .*rand(Float64, 1_000_000)))
+
+df = DataFrame(x = vecr1, y = vecr2, g = vecr3)
+categorical!(df,:g)
+Douglass.set_active_df(:df)
+d"bysort :g (:x) : egen :z = mean(:y) if :x .< 1000.0"
+d"drop :z"
+
+
+# parsing
+
+include("src/Douglass.jl")
+df = dataset("datasets", "iris")
+Douglass.set_active_df(:df)
+
+d"bysort :Species (:SepalLength) : gen :z = 1.0 if :SepalLength .< 1000.0, option1 option2(false) option3(:x .+ :y)"
+
+# replace without by
+include("src/Douglass.jl")
+df = dataset("datasets", "iris")
+Douglass.set_active_df(:df)
+
+d"gen :x = _n"
+d"replace :x = _n + 1"
+d"replace :x = _n + 10 if _n<3 "
+
+
+
+using Douglass, RDatasets
+include("src/Douglass.jl")
+df = dataset("datasets", "iris")
+# set the active DataFrame
+Douglass.set_active_df(:df)
+
+# create a variable `z` that is the sum of `SepalLength` and `SepalWidth`, for each row
+d"gen :z = :SepalLength + :SepalWidth"
+# replace `z` by the row index for the first 10 observations
+d"replace :z = _n if _n <= 10"
+# drop a variable
+d"drop :z"
+# construct the within-group mean for a subset of the observations
+d"bysort :Species : egen :z = mean(:SepalLength) if :SepalWidth .> 3.0"

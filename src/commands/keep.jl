@@ -5,7 +5,7 @@ macro keep(t::Symbol,
     arguments::Union{Vector{Symbol},Union{Expr, Nothing}}, 
     filter::Union{Expr, Nothing}, 
     use::Union{String, Nothing}, 
-    options::Union{Dict{String,String}, Nothing})
+    options::Union{Dict{String,Any}, Nothing})
     error("""\n
         The syntax is:
             keep <varlist>

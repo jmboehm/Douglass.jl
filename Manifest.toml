@@ -277,6 +277,11 @@ uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
+[[StringInterpolation]]
+path = "/Users/jboehm/.julia/dev/StringInterpolation"
+uuid = "04a2d164-f1d6-5876-bc3c-939d6eebda95"
+version = "0.0.0"
+
 [[TableTraits]]
 deps = ["IteratorInterfaceExtensions"]
 git-tree-sha1 = "b1ad568ba658d8cbb3b892ed5380a6f3e781a81e"

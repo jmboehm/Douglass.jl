@@ -44,10 +44,13 @@ module Douglass
     include("commands/sort.jl")
     include("commands/generate.jl")
     include("commands/replace.jl")
+    include("commands/egen.jl")
 
     include("helper.jl")
 
     global active_df
+
+    global globals
 
     macro use(t::Symbol)
         s = string(t)

@@ -268,7 +268,8 @@ function parse_prefix(str::AbstractString)
                 !isempty(strip(str)) && push!(byvars, Symbol(stripcolon(strip(str))))
             end
         end
-        !isempty(sortvars) || error("Douglass: parse error: error parsing prefix. `bysort` expects a list of variables to sort by.\n$(flush_and_indicate(s))")
+        # Stata allows bysort without variables to sort by... not nice, but ok.
+        # !isempty(sortvars) || error("Douglass: parse error: error parsing prefix. `bysort` expects a list of variables to sort by.\n$(flush_and_indicate(s))")
     
     elseif str == "by"
         (delimiter == :delimiter_whitespace) || error("Douglass: parse error: error parsing prefix. expecting list of variable names.\n$(flush_and_indicate(s))")
@@ -309,12 +310,99 @@ function parse_main(str::AbstractString)
 
     return command, arguments
 end
-function parse_options(str::String)
-    @warn("Parsing options not implemented yet.")
-    return Dict{String, String}()
+
+# takes an option string of the form "foo" or "foo(bar)" and parses it as a key, val pair
+function parse_option(str::AbstractString)
+    s = Stream(str,1)
+    outkey = ""
+    outval = ""
+    inval = false
+    while !parse_eof(s)
+        c = parse_next(s)
+        if c == '('
+            inval = true
+        elseif (inval==false) && (c == ')')
+            error("Parse error: unexpected symbol encountered while parsing options.\n$(flush_and_indicate(s))")
+        elseif (inval==true) && (c == ')')
+            !parse_eof(s) && error("Parse error: unexpected symbol encountered while parsing options.\n$(flush_and_indicate(s))")
+        elseif inval == false
+            outkey = outkey * c
+        elseif inval == true
+            outval = outval * c
+        end
+    end
+    if length(outkey)==0
+        error("Parse error: invalid option string.\n$(flush_and_indicate(s))")
+    end
+    if length(outval)==0
+        # no value, set to "true"
+        outval = "true"
+    end
+    return outkey, outval
 end
 
+# options are being parsed in the following way:
+#   `foo` results in an entry "foo" => true 
+#   `foo(bar)` results in an entry "foo" => Meta.parse(bar)
+function parse_options(str::AbstractString)
+    s = Stream(str,1)
+    out = Dict{String, Any}()
+    while !parse_eof(s)
+        word, del = get_word(s)
+        if !isempty(strip(word))
+            k, v = parse_option(strip(word))
+            push!(out, k => Meta.parse(v))
+        end
+        if (del == :delimiter_colon) || (del == :delimiter_comma)
+            error("Parse error: unexpected delimiter in options.\n$(flush_and_indicate(s))")
+        end
+    end
+    return out
+end
 
+# This evaluates the $$ in the Stream.
+# I hate this solution, but it's the best I could come up with.
+function interp(s::Stream)
+
+    ret_string = ""
+    while !parse_eof(s)
+        c = parse_next(s)
+        if (c == '$') && !parse_eof(s) && parse_peek(s) == '$'
+            !parse_eof(s) || error("Interpolation error: unexpected end of string.")
+            parse_next(s)
+            if (parse_peek(s) == '(')
+                # go until next ')'
+                parse_next(s)
+                m = ""
+                while true
+                    c2 = parse_next(s)
+                    if c2 == ')'
+                        break
+                    else 
+                        m = m * c2
+                    end
+                    !parse_eof(s) || error("Interpolation error: unexpected end of string.")
+                end
+            else
+                # go until next whitespace
+                m = ""
+                while true
+                    c2 = parse_next(s)
+                    if c2 == ' '
+                        break
+                    else 
+                        m = m * c2
+                    end
+                    !parse_eof(s) || break
+                end
+            end
+            ret_string = ret_string * string(Base.eval(Main,Symbol(m))) * ' '
+        else
+            ret_string = ret_string * c
+        end
+    end
+    return ret_string
+end
 
 # This is supposed to be an simple parser for commands.
 #
@@ -334,7 +422,14 @@ end
 # Stuff before the first ": " is considered the prefix
 # Stuff after the first 
 function parse(str::AbstractString)
-    stream = Stream(str, 1)
+
+    # First interpolate the $ (or $() ) expressions
+    # I hate it, but I have not found a solution other than eval (or globals)
+    stream = Stream(str,1)
+    s_after_interpolation = interp(stream)
+    println("After \$ parsing: $s_after_interpolation")
+
+    stream = Stream(s_after_interpolation, 1)
     cmd = parse(stream)
 end
 

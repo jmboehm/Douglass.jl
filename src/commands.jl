@@ -1,12 +1,4 @@
-function gen(t, varname::Symbol, vec::Vector{T}) where {T}
-    if varname ∈ names(t)
-        error("Table already has a column with this name.")
-    end
-    if length(vec) != size(t,1)
-        error("Vector is not of the same length as the table.")
-    end
-    t[!,varname] = deepcopy(vec)  # note that this makes a copy
-end
+
 
 # generate a variable named `varname` that contains vec
 # function gen(t, varname::Symbol, s::String)
@@ -218,8 +210,3 @@ macro merge!(t::Symbol, type, keys, rhs, options)
     )
 end
 
-# high-level macros:
-
-macro egen()
-    println("we are in egen!")
-end
