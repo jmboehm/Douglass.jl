@@ -236,22 +236,11 @@ name = :x
 d"gen $name = :SepalLength"
 
 
-
-d"gen :x = :SepalLength"
-
-str = raw"gen :x = $(one) "
- r
-
-name = :SepalLength
-
-d"gen :name = $name"
-
-macro e_str(s)
-    esc(Meta.parse("\"$(escape_string(s))\""))
+ex = quote
+    :x::Float64 = :y .+ :z
+    drop :x
 end
-a = e"$(one)"
-
-a = Meta.parse("\"$(escape_string(str))\"")
+dump(ex)
 
 
 # ***************
@@ -292,7 +281,7 @@ vecr3 = Int64.(floor.(100.0 .*rand(Float64, 1_000_000)))
 df = DataFrame(x = vecr1, y = vecr2, g = vecr3)
 categorical!(df,:g)
 Douglass.set_active_df(:df)
-d"bysort :g (:x) : egen :z = mean(:y) if :x .< 1000.0"
+d"bysort :g (:x) : egen :z::Float64 = mean(:y) if :x .< 1000.0"
 d"drop :z"
 
 
