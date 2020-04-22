@@ -1,12 +1,11 @@
 # Douglass.jl
 
-![Lifecycle](https://img.shields.io/badge/lifecycle-experimental-orange.svg) 
 <!--![Lifecycle](https://img.shields.io/badge/lifecycle-maturing-blue.svg)-->
 <!--![Lifecycle](https://img.shields.io/badge/lifecycle-stable-green.svg)
 ![Lifecycle](https://img.shields.io/badge/lifecycle-retired-orange.svg)
 ![Lifecycle](https://img.shields.io/badge/lifecycle-archived-red.svg)
 ![Lifecycle](https://img.shields.io/badge/lifecycle-dormant-blue.svg) -->
-[![Build Status](https://travis-ci.org/jmboehm/GLFixedEffectModels.jl.svg?branch=master)](https://travis-ci.org/jmboehm/Douglass.jl) [![Coverage Status](https://coveralls.io/repos/github/jmboehm/Douglass.jl/badge.svg?branch=master)](https://coveralls.io/github/jmboehm/Douglass.jl?branch=master)
+![Lifecycle](https://img.shields.io/badge/lifecycle-experimental-orange.svg) [![Build Status](https://travis-ci.org/jmboehm/Douglass.jl.svg?branch=master)](https://travis-ci.org/jmboehm/Douglass.jl) [![Coverage Status](https://coveralls.io/repos/github/jmboehm/Douglass.jl/badge.svg?branch=master)](https://coveralls.io/github/jmboehm/Douglass.jl?branch=master)
 
 
 Toolkit for doing data wrangling on Julia DataFrames. Loosely based off Stata's syntax.
