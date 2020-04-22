@@ -78,4 +78,4 @@ module Douglass
 end
 
 # define the interface code outside
-include("interface.jl")
+Base.include("interface.jl")
