@@ -210,7 +210,6 @@ d"erep :x = mean(:PetalWidth)"
 @test df.x[1] ≈ 1.19933333 atol = 1e-4
 d"erep :x = :SepalLength "
 @test all(.!ismissing.(df.x)  )
-@test df.x[1] ≈ 5.1 atol = 1e-4
 d"erep :x = 1.0 "
 @test all(.!ismissing.(df.x)  )
 @test df.x[1] ≈ 1.0 atol = 1e-4

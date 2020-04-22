@@ -136,7 +136,6 @@ macro generate!(t::Symbol,
     Douglass.ref_quotenodes!(arguments)
     !isnothing(filter) && Douglass.ref_quotenodes!(filter)
     # get the assigned var symbol and QuoteNode 
-    @show arguments.args[1]
     if isa(arguments.args[1], Symbol)
         assigned_var_qn = QuoteNode(arguments.args[1])
     elseif isexpr(arguments.args[1]) && (arguments.args[1].head == :$)
@@ -151,13 +150,9 @@ macro generate!(t::Symbol,
     else
         error("Assigned variable must be referenced using the colon syntax, e.g. :x.")
     end
-    @show assigned_var_qn
 
-    # if the RHS of the assignment expression is currently a symbol, make it an Expr
-    #transformation = (typeof(arguments.args[2]) == Symbol) ? Expr(arguments.args[2]) : arguments.args[2]
     transformation = arguments.args[2]
     # return `nothing`s in case the index is < 1
-    @show transformation
     isexpr(transformation) && replace_invalid_indices!(transformation)
 
     return esc(

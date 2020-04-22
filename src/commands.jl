@@ -1,15 +1,5 @@
 
 
-# generate a variable named `varname` that contains vec
-# function gen(t, varname::Symbol, s::String)
-#     if varname ∈ names(t)
-#         error("Table already has a column with this name.")
-#     end
-#     x = @with(t, s)
-#     @show x
-#     t[!,varname] = x
-# end
-
 # rename the column `var` to `to`
 # uses DataFrames
 macro rename!(t::Symbol, var, to)

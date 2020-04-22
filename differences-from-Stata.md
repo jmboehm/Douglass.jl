@@ -1,6 +1,6 @@
 # Differences between Douglass.jl and Stata
 
-# General
+## General
 
 - Keep in mind that Douglass.jl only takes your command, parses it, and calls the appropriate functions in DataFramesMeta.jl or DataFrames.jl. Hence, you are working with the types in Julia (`Int64`, `Float64`, etc.), and the results of your operations are the results of the operations in Julia. This applies, in particular, to the [behavior of `missing`](https://docs.julialang.org/en/v1/manual/missing/) and to the rules on [type conversion and promotion](https://docs.julialang.org/en/v1/manual/conversion-and-promotion/).
 - Variables in the activate `DataFrame` are referenced using colons (`:`), e.g. `:myvariable`. If you do not use the colon, Douglass assumes that it's a variable in the current scope, e.g.

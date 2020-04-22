@@ -223,23 +223,23 @@ function parse(s::Stream)
         options = nothing
     end
 
-    println("***************************************************************")
-    println("Parser debug output:")
-    println("By:")
-    @show prefix.by
-    println("Sort:")
-    @show prefix.sort
-    println("Command:")
-    @show command 
-    println("Arguments:")
-    @show arguments 
-    println("Filter:")
-    @show filter 
-    println("Using:")
-    @show use 
-    println("Options:")
-    @show options 
-    println("***************************************************************")
+    # println("***************************************************************")
+    # println("Parser debug output:")
+    # println("By:")
+    # @show prefix.by
+    # println("Sort:")
+    # @show prefix.sort
+    # println("Command:")
+    # @show command 
+    # println("Arguments:")
+    # @show arguments 
+    # println("Filter:")
+    # @show filter 
+    # println("Using:")
+    # @show use 
+    # println("Options:")
+    # @show options 
+    # println("***************************************************************")
     
     return Command(prefix.by, prefix.sort, command, arguments, filter, use, options)
 
@@ -427,7 +427,7 @@ function parse(str::AbstractString)
     # I hate it, but I have not found a solution other than eval (or globals)
     stream = Stream(str,1)
     s_after_interpolation = interp(stream)
-    println("After \$ parsing: $s_after_interpolation")
+    #println("After \$ parsing: $s_after_interpolation")
 
     stream = Stream(s_after_interpolation, 1)
     cmd = parse(stream)

@@ -141,9 +141,9 @@ macro reshape_wide!(t::Symbol,
 
     stubs = arguments
     stubs_qn = QuoteNode.(arguments)
-    println("i_varlist_qn is a $(typeof(i_varlist)) with value $(i_varlist).")
-    println("j_var_qn is a $(typeof(j_var_qn)) with value $(j_var_qn).")
-    println("stubs_qn is a $(typeof(stubs_qn)) with value $(stubs_qn).")
+    # println("i_varlist_qn is a $(typeof(i_varlist)) with value $(i_varlist).")
+    # println("j_var_qn is a $(typeof(j_var_qn)) with value $(j_var_qn).")
+    # println("stubs_qn is a $(typeof(stubs_qn)) with value $(stubs_qn).")
 
     if length(stubs_qn) == 1
         s = stubs_qn[1]
@@ -271,9 +271,9 @@ macro reshape_long!(t::Symbol,
     stubs = arguments
 
     stubs_qn = QuoteNode.(arguments)
-    println("i_varlist_qn is a $(typeof(i_varlist)) with value $(i_varlist).")
-    println("j_var_qn is a $(typeof(j_var_qn)) with value $(j_var_qn).")
-    println("stubs_qn is a $(typeof(stubs_qn)) with value $(stubs_qn).")
+    # println("i_varlist_qn is a $(typeof(i_varlist)) with value $(i_varlist).")
+    # println("j_var_qn is a $(typeof(j_var_qn)) with value $(j_var_qn).")
+    # println("stubs_qn is a $(typeof(stubs_qn)) with value $(stubs_qn).")
 
     return esc(
         quote
@@ -282,11 +282,9 @@ macro reshape_long!(t::Symbol,
             variables_by_stub = Vector{Vector{Symbol}}(undef, length(stubs))
             n = names($t)
             n_str = String.(n)
-            println("Variables recognized")
             for s_ind = 1:length(stubs) 
                 stub_str = String(stubs[s_ind])
                 variables_by_stub[s_ind] = [n[i] for i=1:length(n) if n_str[i][1:min(length(stub_str),end)] == stub_str]
-                println("$(stub_str) : $(variables_by_stub[s_ind])")
             end
             # make sure that the sets of variables are disjoint:
             let u = Symbol[]

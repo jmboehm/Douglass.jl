@@ -142,7 +142,7 @@ macro merge!(t::Symbol, type::QuoteNode, keys::Vector{Symbol}, rhs::String, opti
     
     # parse rhs
     ex_rhs = Meta.parse(rhs)
-    println("ex_rhs is a $(typeof(ex_rhs)) with value $(ex_rhs).")
+    #println("ex_rhs is a $(typeof(ex_rhs)) with value $(ex_rhs).")
     dump(ex_rhs)
 
     isa(ex_rhs, Symbol) || error("Merge operations expect a non-quoted symbol after `using`.")
@@ -160,7 +160,6 @@ macro merge!(t::Symbol, type::QuoteNode, keys::Vector{Symbol}, rhs::String, opti
             end    
 
             # outer = 1:1 or m:1 
-
             # outer with lhs and rhs switched: 1:m
 
             # whenever the merge has a '1' in Stata, the keys must be uniquely identifying observations

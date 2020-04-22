@@ -112,9 +112,6 @@ macro generate_byvec!(t::Symbol,
     arguments::Expr, 
     filter::Union{Expr,Nothing}, 
     options::Union{Dict{String,Any}, Nothing})
-
-    @show arguments
-    @show filter
     
     # assert that `arguments` is an assignment
     (arguments.head == :(.=)) && error("`egen` expects a vector-wise assignment operation, e.g. `:x = :y + :z`. Do not broadcast the assignment operator.")
@@ -143,8 +140,8 @@ macro generate_byvec!(t::Symbol,
         transformation = arguments.args[2]
     end
 
-    println("transformation is a $(typeof(transformation)) with value $(transformation).")
-    println("assigned_var_qn is a $(typeof(assigned_var_qn)) with value $(assigned_var_qn).")
+    # println("transformation is a $(typeof(transformation)) with value $(transformation).")
+    # println("assigned_var_qn is a $(typeof(assigned_var_qn)) with value $(assigned_var_qn).")
 
     if assigned_var_type == :Any
         # we don't know the type of the new column
