@@ -44,3 +44,9 @@ end
 # ex = :((:x)[i - 1])
 # dump(ex)
 # replace_invalid_indices!(ex)
+
+
+# returns `true` if `keys` uniquely identify rows in `df`, otherwise `false`
+function unique_obs(df::DataFrame, keys::Vector{Symbol})
+    return allunique(Tables.namedtupleiterator(df[!,keys]))
+end

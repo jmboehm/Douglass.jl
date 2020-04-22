@@ -1,18 +1,14 @@
 # douglass.jl
 
 # Todo implement for first version:
-# @merge! x:x <varlist> using <df2>
-# @reshape! <type> <varlist> , i(<varlist>) j(<varlist>)
 #
 # @gen is probably suffering from type instability
 # @egen is still really crap. It should expect a type (e.g. `egen Float64 :x = ...`)
 
 # Nice to have, but not necessary for first version:
-# @assert <condition>
-# @collapse! (<statistic>) <varlist> ... , by(<varlist>)
-# @append!
-#
-# It would be also really nice to support Stata's macros.
+# assert <condition>
+# collapse (<statistic>) <varlist> ... , by(<varlist>)
+# append using <df>
 
 # WARNING:
 # Douglass does not sanitize your input. If you run @gen(df, :x, destory_world()), 
@@ -32,7 +28,7 @@
 #   `bysort groupvar: gen :z = :x[_n] - :x[_n-1]`.
 module Douglass
 
-    using DataFrames, DataFramesMeta
+    using DataFrames, DataFramesMeta, Tables
     using MacroTools
 
     include("Command.jl")
@@ -47,12 +43,12 @@ module Douglass
     include("commands/replace.jl")
     include("commands/rename.jl")
     include("commands/egen.jl")
+    include("commands/merge.jl")
+    include("commands/reshape.jl")
 
     include("helper.jl")
 
     global active_df
-
-    global globals
 
     macro use(t::Symbol)
         s = string(t)
@@ -77,51 +73,7 @@ module Douglass
         (ismissing(x) || size(x,1) == 1) ? repeat([x],l) : x
     end
 
-    export @egen
-
-    # macro m(t::Symbol, e::Expr)
-    #     esc(
-    #         quote
-    #             local x = @with($t, $e)
-    #             size(t,1) == 1 ? repeat([$e],size(t,1))
-    #         end
-    #     )
-    # end
-
-    # macro helper_disallow_scalar(t::Symbol, e::Expr)
-    #     esc(
-    #         quote
-    #             size(t,1) == 1 ? repeat($e .* ones(typeof) : e
-    #         end
-    #     )
-    # end
-
-
-    # macro assert_filter(t::Symbol, filter::Symbol)
-    #     esc(
-    #         quote
-    #             error("filter is not a valid boolean vector. Please clarify the filter condition.")
-    #         end
-    #     )
-    # end
-
-    
-
-    # macro douglass(ex::Expr...)
-    #     for i = 1:length(ex)
-    #         @show ex[i]
-    #     end
-    # end
-
-
-    # function egen(df::DataFrame,        # DF on which we operate
-    #     byVarlist::Vector{Symbol},      # by variables
-    #     sortVarlist::Vector{Symbol},    # sort variables
-    #     newVarname::Symbol,             # newly generated symbol
-    #     fct::Function,                  # function to use
-    #     args::Vector{Symbol})           # argument list to the function
-
-    # end
+    export parse_varlist, @use
 
 end
 

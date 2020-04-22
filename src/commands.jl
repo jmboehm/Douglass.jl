@@ -176,37 +176,4 @@ macro duplicates_drop!(t, varlist::Expr)
     )
 end
 
-# merge <type> <keys> using <rhs> , <options>
-# Note: this could also be a function, really
-macro merge!(t::Symbol, type, keys, rhs, options)
-    esc(
-        quote
-            # make sure keys are present in both master and using
-            assert_vars_present($t, $keys)
-            assert_vars_present($rhs, $keys)
-
-            # outer = 1:1 or m:1 
-
-            # outer with lhs and rhs switched: 1:m
-
-            # whenever the merge has a '1' in Stata, the keys must be uniquely identifying observations
-            # this needs to be checked
-            if ($type == :one_to_one) || ($type == :m_to_one)
-                # check that we are restraining things correctly
-                ($type == :one_to_one) && (Douglass.unique_obs($t, $keys) || error("Keys are not uniquely identifying observations in master DataFrame."))
-                Douglass.unique_obs($rhs, $keys) || error("Keys are not uniquely identifying observations in using DataFrame.")
-                # do the merge
-                join($t, $rhs, on = $keys, kind = :outer)
-            elseif ($type == :one_to_m)
-                Douglass.unique_obs($t, $keys) || error("Keys are not uniquely identifying observations in master DataFrame.")
-                # do the merge
-                join($rhs, $t, on = $keys, kind = :outer)
-            elseif ($type == :m_to_m)
-                error("m:m mergers are not allowed.")
-            else
-                error("Invalid merge type.")
-            end
-        end
-    )
-end
 

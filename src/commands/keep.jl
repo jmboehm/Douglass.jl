@@ -35,16 +35,13 @@ end
 # TODO add a version that allows for Vector{Symbol} arguments
 
 # @keep_var! <varlist>
-macro keep_var!(t::Symbol,varlist::Expr)
-    esc(
+macro keep_var!(t::Symbol,varlist::Vector{Symbol})
+    return esc(
         quote
-            # check that <varlist> is a Vector{Symbol}
-            typeof($varlist) == Vector{Symbol} || error("Argument to keep! must 
-                                                    be evaluating to a Vector{Symbol}. Type is $(typeof($varlist))")
             # check that all variables are present
             Douglass.@assert_vars_present($t, $varlist)
             # keep them
-            select!($t, $varlist)
+            select!($t, $varlist )
         end
     )
 end

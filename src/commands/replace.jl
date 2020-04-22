@@ -68,6 +68,7 @@ macro replace(t::Symbol,
     )
 end
 
+# version with `by`
 macro replace_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union{Vector{Symbol}, Nothing}, arguments::Expr, filter::Union{Expr, Nothing}, options::Union{Dict{String,Any}, Nothing})
     # assert that `arguments` is an assignment
     (arguments.head == :(=)) || error("`generate` expects an assignment operation, e.g. :x = :y + :z")
@@ -80,10 +81,10 @@ macro replace_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union{
     assigned_var_qn = arguments.args[1].args[1]
     
     # if the RHS of the assignment expression is currently a symbol, make it an Expr
-    transformation = (typeof(arguments.args[2]) == Symbol) ? Expr(arguments.args[2]) : arguments.args[2]
+    transformation = arguments.args[2]
     # return `nothing`s in case the index is < 1
     isexpr(transformation) && replace_invalid_indices!(transformation)
-    @show transformation
+
     return esc(
         quote
             # check variable is not present
@@ -156,7 +157,7 @@ macro replace_byrow!(t::Symbol,
     #transformation = (typeof(arguments.args[2]) == Symbol) ? Expr(arguments.args[2]) : arguments.args[2]
     transformation = arguments.args[2]
     # return `nothing`s in case the index is < 1
-    @show transformation
+
     isexpr(transformation) && replace_invalid_indices!(transformation)
 
     return esc(

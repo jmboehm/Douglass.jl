@@ -1,3 +1,7 @@
+# drop
+#
+# TODO: support _n and non-broadcast operators
+#
 # this is the general form of the command
 # let it fail with an error, because we don't allow all these blocks
 macro drop(t::Symbol, 
