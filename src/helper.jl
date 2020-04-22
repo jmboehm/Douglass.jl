@@ -25,7 +25,6 @@ end
 # args: args: Array{Any}((2,))
 #   1: Symbol y
 #   2: Expr
-
 function replace_invalid_indices!(ex::Expr)
     if (ex.head == :ref) && isa(ex.args[1], QuoteNode) && MacroTools.isexpr(ex.args[2])
         r = deepcopy(ex)
@@ -40,13 +39,18 @@ function replace_invalid_indices!(ex::Expr)
     end
     return ex
 end
-# ex = :( x[i] = y[i-1] )
-# ex = :((:x)[i - 1])
-# dump(ex)
-# replace_invalid_indices!(ex)
-
 
 # returns `true` if `keys` uniquely identify rows in `df`, otherwise `false`
 function unique_obs(df::DataFrame, keys::Vector{Symbol})
     return allunique(Tables.namedtupleiterator(df[!,keys]))
+end
+
+# expand the argument x to the length of the df if it's not already a vector
+# first generic version that supports size(_,1)
+function helper_expand(df, x)
+    (ismissing(x) || size(x,1) == 1) ? repeat([x],size(df,1)) : x
+end
+# ... or to a length of l::Int64
+function helper_expand(l::Int64, x)
+    (ismissing(x) || size(x,1) == 1) ? repeat([x],l) : x
 end

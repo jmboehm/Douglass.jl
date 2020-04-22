@@ -31,7 +31,10 @@ module Douglass
     using DataFrames, DataFramesMeta, Tables
     using MacroTools
 
+    # types
     include("Command.jl")
+
+    include("interface.jl")
 
     include("parse.jl")
     include("commands.jl")
@@ -50,32 +53,7 @@ module Douglass
 
     global active_df
 
-    macro use(t::Symbol)
-        s = string(t)
-        return esc(:( Douglass.set_active_df( Symbol($s) ) ))
-    end
-
-    function set_active_df(df::Symbol)
-        global active_df
-        active_df = df
-
-    end
-
-    # HELPER FUNCTIONS *********************************************************
-
-    # expand the argument x to the length of the df if it's not already a vector
-    # first generic version that supports size(_,1)
-    function helper_expand(df, x)
-        (ismissing(x) || size(x,1) == 1) ? repeat([x],size(df,1)) : x
-    end
-    # ... or to a length of l::Int64
-    function helper_expand(l::Int64, x)
-        (ismissing(x) || size(x,1) == 1) ? repeat([x],l) : x
-    end
-
-    export parse_varlist, @use
+    export parse_varlist, @use, @d_str, set_active_df
 
 end
 
-# define the interface code outside
-Base.include("interface.jl")

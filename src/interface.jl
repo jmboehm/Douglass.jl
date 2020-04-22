@@ -1,7 +1,4 @@
 
-# we need some packages outside
-using DataFramesMeta
-
 macro d_str(str)
     # parse the command
     cmd = Douglass.parse(str)
@@ -16,6 +13,16 @@ macro d_str(str)
         cmd.filter,
         cmd.use,
         cmd.options ))
+end
+
+macro use(t::Symbol)
+    s = string(t)
+    return esc(:( Douglass.set_active_df( Symbol($s) ) ))
+end
+
+function set_active_df(df::Symbol)
+    global active_df
+    active_df = df
 end
 
 # # the goal of this is just to return a string with the interpolated string
