@@ -36,6 +36,7 @@ module Douglass
     # types
     include("Command.jl")
 
+    include("setup.jl")
     include("interface.jl")
 
     include("parse.jl")
@@ -58,12 +59,6 @@ module Douglass
     global active_df
 
     export parse_varlist, @use, @d_str, set_active_df
-
-    # set up REPL mode 
-    isdefined(Base, :active_repl) &&
-        isinteractive() && typeof(Base.active_repl) != REPL.BasicREPL &&
-            !DouglassPrompt.repl_inited(Base.active_repl) && DouglassPrompt.repl_init(Base.active_repl)
-
 
 end
 
