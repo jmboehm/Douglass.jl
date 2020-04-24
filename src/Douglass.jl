@@ -26,10 +26,12 @@
 #   the former, you can use functions that take vectors as arguments, but if you do element-wise operations you have to broadcast these operations
 #   (e.g. `bysort groupvar: egen :z = mean(:x)`, or `bysort groupvar: egen :z = :x .+ :y`). In `gen` and `replace`, you can use indexing, e.g. using
 #   `bysort groupvar: gen :z = :x[_n] - :x[_n-1]`.
+#__precompile__()
 module Douglass
 
     using DataFrames, DataFramesMeta, Tables
     using MacroTools
+    using REPL
 
     # types
     include("Command.jl")
@@ -49,11 +51,19 @@ module Douglass
     include("commands/merge.jl")
     include("commands/reshape.jl")
 
+    include("repl.jl")
+
     include("helper.jl")
 
     global active_df
 
     export parse_varlist, @use, @d_str, set_active_df
+
+    # set up REPL mode 
+    isdefined(Base, :active_repl) &&
+        isinteractive() && typeof(Base.active_repl) != REPL.BasicREPL &&
+            !DouglassPrompt.repl_inited(Base.active_repl) && DouglassPrompt.repl_init(Base.active_repl)
+
 
 end
 
