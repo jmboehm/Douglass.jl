@@ -120,9 +120,18 @@ module DouglassPrompt
         #     status == :ok || status == :error
         # end
         main_f = main.on_done
+        main.on_done = (s, buf, ok) -> begin
+            println("In Main.on_done:")
+            @show buf.data
+            @show s
+            @show ok
+            REPL.respond(x->Base.parse_input_line(x,filename=REPL.repl_filename(repl,hp)), repl, main)
+        end
         d_mode.on_done = (s, buf, ok) -> begin
+            #println("In d_mode.on_done:")
             mybuf = IOBuffer(sizehint = buf.size + 3)
-            write(mybuf, "d\"" * read(buf, String) * "\"")
+            write(mybuf, vcat([ 0x64, 0x22],buf.data,[0x22]))
+            #write(mybuf, "d\"" * read(buf, String) * "\"")
             main_f(s, mybuf, ok)
         end
     

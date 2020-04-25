@@ -34,6 +34,7 @@ d"bysort :Species : egen :z = mean(:SepalLength) if :SepalWidth .> 3.0"
 
 ## Notes
 
+- Better documentation of the interface will come when the package is a bit more stable. In the meantime, the [Test script](https://github.com/jmboehm/Douglass.jl/blob/master/test/Douglass.jl) is probably the best introduction to the interface for those that know Stata.
 - Keep in mind that this is not Stata. [Here](differences-from-Stata.md) are some notable differences.
 
 ## Roadmap / Todo's
