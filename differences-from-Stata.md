@@ -36,3 +36,9 @@ The current implementation of this rests on Julia's `eval()`, however, and is th
 - In `reshape_long`:
     * Unlike in Stata, the variable in j() is made to have type `Symbol` and is not automatically converted to `String` or numerical types.
     * Unlike in Stata, variables that are not listed in the arguments, `i`, or `j` are not part out the returned DataFrame. If you want to include them, list them as part of `i`.
+
+### merge (`merge_11`, `merge_1m,`, `merge_m1`)
+
+  - Note that the commands are e.g. `merge_m1` not `merge m:1`. There is an underscore and the colon is missing.
+  - The commands currently do not produce any variable `_merge` and no summary statistics.
+  - m:m merges are currently not allowed.

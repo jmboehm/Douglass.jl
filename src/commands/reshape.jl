@@ -192,42 +192,7 @@ macro reshape_wide!(t::Symbol,
             end
         )
     end
-    # return esc(ret)
 end
-# # Vector of stubs. A bit annoying because `unstack` does not support multiple `value`.
-# function long_to_wide(t::Symbol,
-#     i_varlist_qn::Vector{QuoteNode},
-#     j_var_qn::QuoteNode, stubs::Vector{QuoteNode})
-#     return esc(
-#         quote
-#             dfv = Vector{typeof($t)}(undef,length($stubs))
-#             for i = 1:length($stubs)
-#                 dfv[i] = unstack($t, $i_varlist_qn, $j_var_qn, $stubs[i])
-#             end
-#             for i = 2:length($stubs)
-#                 for n in names(dfv[i])
-#                     # ignore id
-#                     (QuoteNode(n) ∈ $i_varlist_qn) && continue;
-#                     # otherwise copy over the new variables
-#                     new_col_name = Symbol("$($(stubs[i]))" * "_" * String(n))
-#                     dfv[1][!,new_col_name] = dfv[i][!,n]
-#                 end
-#             end
-#             dfv[1]
-#         end
-#     )
-# end
-# # Single stub. Faster implementation.
-# function long_to_wide(t::Symbol,
-#     i_varlist_qn::Vector{QuoteNode},
-#     j_var_qn::QuoteNode, stub::QuoteNode)
-#     return esc(
-#         quote
-#             $t = unstack($t, $i_varlist_qn, $j_var_qn, $stub)
-#         end
-#     )
-# end
-
 
 # if no i-variables are given, we default to all non-measure_vars.
 macro reshape_long!(t::Symbol, 

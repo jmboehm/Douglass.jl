@@ -142,8 +142,6 @@ macro merge!(t::Symbol, type::QuoteNode, keys::Vector{Symbol}, rhs::String, opti
     
     # parse rhs
     ex_rhs = Meta.parse(rhs)
-    #println("ex_rhs is a $(typeof(ex_rhs)) with value $(ex_rhs).")
-    dump(ex_rhs)
 
     isa(ex_rhs, Symbol) || error("Merge operations expect a non-quoted symbol after `using`.")
 

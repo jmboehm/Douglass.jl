@@ -104,37 +104,22 @@ module DouglassPrompt
         LineEdit.refresh_line(s)
     end
 
+    repl_filename(repl, hp::REPL.REPLHistoryProvider) = "REPL[$(max(length(hp.history)-hp.start_idx, 1))]"
+    repl_filename(repl, hp) = "REPL"
+
     function create_d_repl(repl, main)
         d_mode = LineEdit.Prompt("Douglass> ";
-            prompt_prefix=Base.text_colors[:cyan],
+            prompt_prefix="\e[38;5;166m",
             prompt_suffix=main.prompt_suffix,
             sticky=true)
-    
+        # alternative prompt_prefix: Base.text_colors[:cyan]
+
         hp = main.hist
         hp.mode_mapping[:d] = d_mode
         d_mode.hist = hp
-        #d_mode.complete = DCompletionProvider(repl)
-        # d_mode.on_enter = main.on_enter
-        # d_mode.on_enter = (s) -> begin
-        #     status = parse_status(String(take!(copy(LineEdit.buffer(s)))))
-        #     status == :ok || status == :error
-        # end
-        main_f = main.on_done
-        main.on_done = (s, buf, ok) -> begin
-            println("In Main.on_done:")
-            @show buf.data
-            @show s
-            @show ok
-            REPL.respond(x->Base.parse_input_line(x,filename=REPL.repl_filename(repl,hp)), repl, main)
-        end
-        d_mode.on_done = (s, buf, ok) -> begin
-            #println("In d_mode.on_done:")
-            mybuf = IOBuffer(sizehint = buf.size + 3)
-            write(mybuf, vcat([ 0x64, 0x22],buf.data,[0x22]))
-            #write(mybuf, "d\"" * read(buf, String) * "\"")
-            main_f(s, mybuf, ok)
-        end
-    
+        # this is the key component: do whatever the main julia repl does, but add the macro call.
+        d_mode.on_done = REPL.respond(x->Base.parse_input_line("d\"\"\"" * x * "\"\"\"",filename=repl_filename(repl,hp)), repl, main)
+
         bracketed_paste_mode_keymap = Dict{Any,Any}(
             "\e[200~" => bracketed_paste_callback
         )
@@ -170,7 +155,7 @@ module DouglassPrompt
                         LineEdit.state(s, d_mode).input_buffer = buf
                     end
                 else
-                    LineEdit.edit_insert(s, '$')
+                    LineEdit.edit_insert(s, '`')
                 end
             end
         )

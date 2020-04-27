@@ -8,7 +8,7 @@
 ![Lifecycle](https://img.shields.io/badge/lifecycle-experimental-orange.svg) [![Build Status](https://travis-ci.org/jmboehm/Douglass.jl.svg?branch=master)](https://travis-ci.org/jmboehm/Douglass.jl) [![Coverage Status](https://coveralls.io/repos/github/jmboehm/Douglass.jl/badge.svg?branch=master)](https://coveralls.io/github/jmboehm/Douglass.jl?branch=master)
 
 
-Toolkit for doing data wrangling on Julia DataFrames. Loosely based off Stata's syntax.
+Douglass.jl is a package for manipulating DataFrames in Julia using a syntax that is very similar to Stata.
 
 ## Examples
 
@@ -32,6 +32,12 @@ d"bysort :Species : egen :z = mean(:SepalLength) if :SepalWidth .> 3.0"
 
 - `generate`, `replace`, `drop`, `keep`, `rename`, `sort`, `egen` (and an analogous version, `ereplace`), `reshape`, `merge`
 
+## REPL mode
+
+Press the backtick (`` ` ``) to switch between the normal Julia REPL and the Douglass REPL mode:
+
+![REPL Screenshot](repl.png "Douglass REPL Screenshot")
+
 ## Notes
 
 - Better documentation of the interface will come when the package is a bit more stable. In the meantime, the [Test script](https://github.com/jmboehm/Douglass.jl/blob/master/test/Douglass.jl) is probably the best introduction to the interface for those that know Stata.
@@ -39,11 +45,8 @@ d"bysort :Species : egen :z = mean(:SepalLength) if :SepalWidth .> 3.0"
 
 ## Roadmap / Todo's
 
-- In the medium term:
-    * A custom REPL mode
-
--  In the long term:
-    * If there's demand for it, one could make this extensible, so that other commands can be added in separate packages
+- Implement more commands
+- If other people find the package useful, it may be worth making the package extensible, so that other commands can be added in separate packages
 
 ## Misc
 
