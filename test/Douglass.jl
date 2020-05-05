@@ -86,8 +86,39 @@ d"drop :PetalWidth :PetalLength"
 @test :PetalWidth ∉ names(df)
 @test :PetalLength ∉ names(df)
 
-d"drop if :SepalWidth .> 3.0"
+d"drop if :SepalWidth > 3.0"
 @test size(df, 1) == 83
+d"drop if _n > 10"
+@test size(df, 1) == 10
+d"drop if _n < _N / 2"
+@test size(df, 1) == 6
+
+df = dataset("datasets", "iris")
+Douglass.set_active_df(:df)
+d"bysort :Species : drop if :SepalLength == 5.1"
+@test size(df,1) == 141
+d"bysort :Species : drop if _n > 20"
+@test size(df,1) == 60
+
+# `keep` *************************************************************************
+
+
+df = dataset("datasets", "iris")
+Douglass.set_active_df(:df)
+
+d"keep :SepalLength :SepalWidth"
+@test :PetalWidth ∉ names(df)
+d"keep if :SepalWidth > 3.1"
+@test size(df,1) == 56
+d"keep if _n <= 10"
+@test size(df,1) == 10
+
+df = dataset("datasets", "iris")
+Douglass.set_active_df(:df)
+d"bysort :Species : keep if :SepalLength != 5.1"
+@test size(df,1) == 141
+d"bysort :Species : keep if _n <= 20"
+@test size(df,1) == 60
 
 # `egen` *************************************************************************
 
@@ -213,17 +244,6 @@ d"erep :x = :SepalLength "
 d"erep :x = 1.0 "
 @test all(.!ismissing.(df.x)  )
 @test df.x[1] ≈ 1.0 atol = 1e-4
-
-# `keep` *************************************************************************
-
-
-df = dataset("datasets", "iris")
-Douglass.set_active_df(:df)
-
-d"keep :SepalLength :SepalWidth"
-@test :PetalWidth ∉ names(df)
-d"keep if :SepalWidth .> 3.1"
-@test size(df,1) == 56
 
 # `merge` ************************************************************************
 
@@ -388,6 +408,15 @@ d"sort :SepalLength"
 @test df.SepalLength[1] ≈ 4.3 atol = 1e-4
 d"sort :PetalLength :SepalLength"
 @test df.SepalLength[1] ≈ 4.6 atol = 1e-4
+
+# `duplicates_drop` *************************************************************************
+
+using Douglass
+df = dataset("datasets", "iris")
+Douglass.set_active_df(:df)
+
+d"duplicates_drop :SepalLength :SepalWidth"
+@test size(df,1) == size(unique([(df.SepalLength[i],df.SepalWidth[i]) for i=1:size(df,1)]),1)
 
 # *******************
 

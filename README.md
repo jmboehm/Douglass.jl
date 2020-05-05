@@ -30,6 +30,25 @@ d"bysort :Species : egen :z = mean(:SepalLength) if :SepalWidth .> 3.0"
 
 ## Commands implemented
 
+- `generate` -- Creates a new variable and assigns the output from an expression to it.
+```
+[bysort <varlist> (<varlist>):] generate <expression> [if <expression>]
+```
+The type of the variable is set to be what the expression evaluates to (and allows `missing`). `generate` operates row-by-row, so you can use `_n` to denote the current row index and do not need to broadcast operators.
+- `replace` -- Recplaces the content of a variable, but does not change the type.
+```
+[bysort <varlist> (<varlist>):] replace <expression> [if <expression>]
+```
+`replace` works like `generate` in that it operates row-by-row.
+- `egenerate` (or `egen` for short) -- Creates a new variable, operates on vectors
+```
+[bysort <varlist> (<varlist>):] egenerate <var> = <expression> [if <expression>]
+```
+The key difference between `generate` and `egen` is that the latter operates on vectors, e.g. you can do `by :group: egen :mymean = Statistics.mean(:var)`. That means that operations on scalars need to be broadcast (Julia's `.` syntax), e.g. `egen :mysum = :a .+ :b`.
+
+`egen` tries to determine the new variable's type by evaluating the expression. Types can also be set explicitly, and this is currently faster: `egen :mysum::Float64 = mean(:var)`.
+
+There is also an analogous version `ereplace` (or `erep` for short) that opera
 - `generate`, `replace`, `drop`, `keep`, `rename`, `sort`, `egen` (and an analogous version, `ereplace`), `reshape`, `merge`
 
 ## REPL mode

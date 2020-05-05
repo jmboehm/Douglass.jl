@@ -157,13 +157,5 @@ macro transform_byrow!(t::Symbol, varlist_by::Expr, varlist_sort::Expr, assigned
     )
 end
 
-macro duplicates_drop!(t, varlist::Expr)
-    esc(
-        quote
-            Douglass.@assert_vars_present($t, $varlist)
-            unique!($t, $varlist)
-        end
-    )
-end
 
 
