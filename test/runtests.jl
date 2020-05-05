@@ -1,6 +1,7 @@
 using Douglass
 
-tests = ["Douglass.jl"
+tests = ["Douglass.jl",
+		"repl.jl"
 		 ]
 
 println("Running tests:")

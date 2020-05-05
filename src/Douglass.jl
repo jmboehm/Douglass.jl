@@ -51,6 +51,7 @@ module Douglass
     include("commands/egen.jl")
     include("commands/merge.jl")
     include("commands/reshape.jl")
+    include("commands/duplicates.jl")
 
     include("repl.jl")
 

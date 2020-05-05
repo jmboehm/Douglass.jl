@@ -22,9 +22,9 @@
 `egenerate` (or `egen`)
 
 Syntax:
-    `egenerate <var> = <expression> [if] <expression>``
+    `egenerate <var> = <expression> [if] <expression>`
     or 
-    `bysort <varlist> (<varlist>): egenerate <var> = <expression> [if] <expression>``
+    `bysort <varlist> (<varlist>): egenerate <var> = <expression> [if] <expression>`
 
 Creates a new variable in the DataFrame. Operates by vector for both the assigned expression, and the
 filter condition, e.g. :var refers to the whole (filtered) column in the DataFrame (or in the group if
