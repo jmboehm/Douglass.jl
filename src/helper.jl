@@ -54,3 +54,53 @@ end
 function helper_expand(l::Int64, x)
     (ismissing(x) || size(x,1) == 1) ? repeat([x],l) : x
 end
+
+
+# Some helper macros
+
+# helper macro to make sure filter is valid
+macro assert_filter(t::Symbol, filter::Expr)
+    esc(
+        quote
+            local x = @with($t, $filter)
+            (typeof(x) <: BitArray{1}) || (typeof(x) <: Vector{Union{Missing,Bool}}) || error("filter is not a valid boolean vector.")
+            true
+        end
+    )
+end
+
+# helper macro to make sure that expression evaluates to a Vector{Symbol}
+macro assert_varlist(t::Symbol, varlist::Expr)
+    esc(
+        quote
+            typeof($varlist) == Vector{Symbol} || error("Argument must be evaluating to a Vector{Symbol}. Type is $(typeof($varlist))")
+            true
+        end
+    )
+end
+    
+# asserts that varlist::Expr evaluates to a Vector{Symbol} and checks that all Symbols are column names in t.
+macro assert_vars_present(t::Symbol, varlist::Expr)
+    esc(
+        quote
+            # check that it's a varlist
+            Douglass.@assert_varlist($t, $varlist)
+            # check that they're present
+            for v in $varlist
+                (v ∈ names($t)) || error("$(v) not a column name in the active DataFrame")
+            end
+            true
+        end
+    )
+end
+
+# Checks that all Symbols are column names in t.
+macro assert_vars_present(t::Symbol, varlist::Vector{Symbol})
+    esc(
+        quote
+            # check that they're present
+            ($varlist ⊆ names($t)) || error("$($varlist) is not a subset of the columns in the active DataFrame")
+            true
+        end
+    )
+end
