@@ -4,9 +4,10 @@
 `duplicates_drop`
 
 Syntax:
+    `duplicates_drop`
     `duplicates_drop <varlist>`
 
-Drops all but the first occurrence of each tupe of unique values denoted by <varlist>
+Drops all but the first occurrence of each row if no <varlist> is specified, or tuple of unique values denoted by <varlist>
 Examples:
 ```julia
 d"duplicates_drop :Species"
@@ -31,7 +32,7 @@ end
 macro duplicates_drop(t::Symbol, 
     by::Nothing, 
     sort::Union{Vector{Symbol}, Nothing}, 
-    arguments::Vector{Symbol}, 
+    arguments::Union{Vector{Symbol},Nothing}, 
     filter::Nothing, 
     use::Nothing, 
     options::Union{Dict{String,Any}, Nothing})
@@ -42,7 +43,7 @@ macro duplicates_drop(t::Symbol,
     )
 end
 
-
+# version with <varlist>
 macro duplicates_drop!(t::Symbol, 
     by::Nothing, 
     sort::Union{Vector{Symbol}, Nothing}, 
@@ -60,6 +61,25 @@ macro duplicates_drop!(t::Symbol,
             Douglass.@assert_vars_present($t, $arguments)
             # make unique
             unique!($t, $arguments)
+        end
+    )
+end
+# version without <varlist>
+macro duplicates_drop!(t::Symbol, 
+    by::Nothing, 
+    sort::Union{Vector{Symbol}, Nothing}, 
+    arguments::Nothing, 
+    filter::Nothing, 
+    use::Nothing, 
+    options::Union{Dict{String,Any}, Nothing})
+    esc(
+        quote
+            # sort, if we need to, (first by-variables, then sort-variables)
+            if !isnothing($(sort)) && !isempty($(sort))
+                sort!($t, $sort)
+            end
+            # make unique
+            unique!($t)
         end
     )
 end
