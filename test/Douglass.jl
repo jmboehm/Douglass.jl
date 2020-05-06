@@ -417,6 +417,10 @@ Douglass.set_active_df(:df)
 
 d"duplicates_drop :SepalLength :SepalWidth"
 @test size(df,1) == size(unique([(df.SepalLength[i],df.SepalWidth[i]) for i=1:size(df,1)]),1)
+people = DataFrame(ID = [20, 20, 40], Name = ["John Doe", "John Doe", "Jane Doe"])
+Douglass.set_active_df(:people)
+d"duplicates_drop"
+@test size(people,1) == 2
 
 # *******************
 

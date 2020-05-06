@@ -48,8 +48,40 @@ The key difference between `generate` and `egen` is that the latter operates on 
 
 `egen` tries to determine the new variable's type by evaluating the expression. Types can also be set explicitly, and this is currently faster: `egen :mysum::Float64 = mean(:var)`.
 
-There is also an analogous version `ereplace` (or `erep` for short) that opera
-- `generate`, `replace`, `drop`, `keep`, `rename`, `sort`, `egen` (and an analogous version, `ereplace`), `reshape`, `merge`
+There is also an analogous version `ereplace` (or `erep` for short) that replaces values of existing variables
+- `drop` -- Drops the specified observations (if used in conjunction with `if`) or variables (without `if`)
+```
+drop <varlist>
+[bysort <varlist> (<varlist>):] drop if <expression>
+```
+The form with `if` operates row-by-row analogously to `generate`, so use expessions that evaluate to a scalar Boolean variable.
+
+There is also an analogous command, `keep`, that drops all but the specified observations or variables.
+- `rename` -- Rename a variable
+```
+rename <var> <var>
+```
+- `sort` -- Sort the rows activate `DataFrame` by the specified columns
+```
+sort <varlist>
+```
+- `reshape` -- Reshape the activate `DataFrame` between wide and long format
+```
+reshape_wide <varlist> , i(<varlist>) j(<varlist>)
+reshape_long <varlist> , i(<varlist>) j(<varlist>)
+```
+See the [documentation in the Stata manual](https://www.stata.com/manuals13/dreshape.pdf).
+- `merge` -- Merge the active `DataFrame` with another one in the local scope
+```
+`merge_11 <varlist> using <DataFrame> , [options]`
+`merge_m1 <varlist> using <DataFrame> , [options]`
+`merge_1m <varlist> using <DataFrame> , [options]`
+```
+See the [documentation in the Stata manual](https://www.stata.com/manuals13/dmerge.pdf). The right-hand-side `DataFrame` must be already in the local scope.
+- `duplicates_drop` -- Delete duplicate rows, keeping only the first occurrence of unique rows. If `<varlist>` is specified, the returned DataFrame contains complete rows, retaining in each case the first instance for which the specified set of variables is unique.
+```
+duplicates_drop [<varlist>]
+```
 
 ## REPL mode
 

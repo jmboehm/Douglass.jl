@@ -31,7 +31,7 @@ The current implementation of this rests on Julia's `eval()`, however, and is th
 
 ### `reshape`
 
-- Note that `reshape_wide` and `reshape_long` here, with a `_` instead of a whitespace.
+- Note that the command is called `reshape_wide` and `reshape_long` here, with a `_` instead of a whitespace.
 - Unlike in Stata, `@` cannot be used as a whitecard.
 - In `reshape_long`:
     * Unlike in Stata, the variable in j() is made to have type `Symbol` and is not automatically converted to `String` or numerical types.
