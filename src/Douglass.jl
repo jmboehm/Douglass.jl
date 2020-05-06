@@ -40,7 +40,6 @@ module Douglass
     include("interface.jl")
 
     include("parse.jl")
-    include("commands.jl")
 
     include("commands/drop.jl")
     include("commands/keep.jl")
