@@ -148,7 +148,7 @@ macro generate_byvec!(t::Symbol,
         return esc(
             quote 
                 # check variable is not present
-                ($(assigned_var_qn) ∉ names($t)) || error("Variable $($(assigned_var_qn)) already present in DataFrame.")
+                ($(assigned_var_qn) ∉ propertynames($t)) || error("Variable $($(assigned_var_qn)) already present in DataFrame.")
                 # determine the column type from doing the transformation on the DF
                 assigned_var_type = eltype(@with($t,$(transformation)))
                 # create the new column
@@ -162,7 +162,7 @@ macro generate_byvec!(t::Symbol,
         return esc(
             quote
                 # check variable is not present
-                ($(assigned_var_qn) ∉ names($t)) || error("Variable $($(assigned_var_qn)) already present in DataFrame.")
+                ($(assigned_var_qn) ∉ propertynames($t)) || error("Variable $($(assigned_var_qn)) already present in DataFrame.")
                 # create the new column
                 $t[!,$(assigned_var_qn)] = missings($(assigned_var_type),size($t,1))
                 # do the assignment
@@ -206,7 +206,7 @@ macro transform_byvec2!(t::Symbol,
                 end
                 _df
             end
-            $t = by($t, $varlist_by, my_f )
+            t2 = combine(my_f, groupby($t,$varlist_by, sort=false, skipmissing = false ))
         end
 
     )
@@ -237,7 +237,7 @@ macro transform_byvec2!(t::Symbol,
                 _df[:,$(assigned_var_qn)] = result
                 _df
             end
-            $t = by($t, $varlist_by, my_f )
+            t2 = combine(my_f, groupby($t,$varlist_by, sort=false, skipmissing = false ))
         end
 
     )
@@ -389,7 +389,7 @@ macro replace_byvec!(t::Symbol,
     return esc(
         quote
             # check variable is present
-            ($(assigned_var_qn) ∈ names($t)) || error("Variable $($(assigned_var_qn)) not present in DataFrame.")
+            ($(assigned_var_qn) ∈ propertynames($t)) || error("Variable $($(assigned_var_qn)) not present in DataFrame.")
             # do the assignment
             Douglass.@transform_byvec2!($t, $varlist_by, $varlist_sort, $assigned_var_qn, $transformation, $filter)
         end
@@ -441,7 +441,7 @@ end
 #         quote
 
 #             # check variable is not present
-#             ($(assigned_var_qn) ∉ names($t)) || error("Variable $($(assigned_var_qn)) already present in DataFrame.")
+#             ($(assigned_var_qn) ∉ propertynames($t)) || error("Variable $($(assigned_var_qn)) already present in DataFrame.")
 
 #             # sort, if we need to, (first by-variables, then sort-variables)
 #             if !isnothing($(varlist_sort)) && !isempty($(varlist_sort))
@@ -508,7 +508,7 @@ end
 #         quote
 
 #             # check variable is not present
-#             ($(assigned_var_qn) ∉ names($t)) || error("Variable $($(assigned_var_qn)) already present in DataFrame.")
+#             ($(assigned_var_qn) ∉ propertynames($t)) || error("Variable $($(assigned_var_qn)) already present in DataFrame.")
 
 #             # sort, if we need to, (first by-variables, then sort-variables)
 #             if !isnothing($(varlist_sort)) && !isempty($(varlist_sort))

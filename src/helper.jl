@@ -87,7 +87,7 @@ macro assert_vars_present(t::Symbol, varlist::Expr)
             Douglass.@assert_varlist($t, $varlist)
             # check that they're present
             for v in $varlist
-                (v ∈ names($t)) || error("$(v) not a column name in the active DataFrame")
+                (v ∈ propertynames($t)) || error("$(v) not a column name in the active DataFrame")
             end
             true
         end
@@ -99,7 +99,7 @@ macro assert_vars_present(t::Symbol, varlist::Vector{Symbol})
     esc(
         quote
             # check that they're present
-            ($varlist ⊆ names($t)) || error("$($varlist) is not a subset of the columns in the active DataFrame")
+            ($varlist ⊆ propertynames($t)) || error("$($varlist) is not a subset of the columns in the active DataFrame")
             true
         end
     )

@@ -127,7 +127,7 @@ macro drop_if!(t::Symbol, varlist_by::Vector{Symbol},
                 end
                 _df
             end
-            t2 = by($t, $varlist_by, my_f )
+            t2 = combine(my_f, groupby($t,$varlist_by, sort=false, skipmissing = false ))
             filter!(r -> t2[DataFrames.row(r),$(assigned_var_qn)] , $t)
             select!($t, Not($(assigned_var_qn)))
         end

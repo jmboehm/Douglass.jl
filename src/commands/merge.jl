@@ -151,10 +151,10 @@ macro merge!(t::Symbol, type::QuoteNode, keys::Vector{Symbol}, rhs::String, opti
             # assert_vars_present($t, $keys)
             # assert_vars_present($rhs, $keys)
             for k in $keys
-                (k ∈ names($t)) || error("Variable $(k) not present in active DataFrame.")
+                (k ∈ propertynames($t)) || error("Variable $(k) not present in active DataFrame.")
             end
             for k in $keys
-                (k ∈ names($ex_rhs)) || error("Variable $(k) not present in RHS DataFrame.")
+                (k ∈ propertynames($ex_rhs)) || error("Variable $(k) not present in RHS DataFrame.")
             end    
 
             # outer = 1:1 or m:1 
@@ -167,11 +167,12 @@ macro merge!(t::Symbol, type::QuoteNode, keys::Vector{Symbol}, rhs::String, opti
                 ($type == :one_to_one) && (Douglass.unique_obs($t, $keys) || error("Keys are not uniquely identifying observations in master DataFrame."))
                 Douglass.unique_obs($ex_rhs, $keys) || error("Keys are not uniquely identifying observations in using DataFrame.")
                 # do the merge
-                $t = join($t, $ex_rhs, on = $keys, kind = :outer)
+                $t = outerjoin($t, $ex_rhs, on = $keys, makeunique = false, indicator=nothing, validate=(false,false))
+                
             elseif ($type == :one_to_m)
                 Douglass.unique_obs($t, $keys) || error("Keys are not uniquely identifying observations in master DataFrame.")
                 # do the merge
-                $t = join($ex_rhs, $t, on = $keys, kind = :outer)
+                $t = outerjoin($t, $ex_rhs, on = $keys, makeunique = false, indicator=nothing, validate=(false,false))
             elseif ($type == :m_to_m)
                 error("m:m mergers are not allowed.")
             else

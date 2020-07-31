@@ -151,7 +151,7 @@ macro reshape_wide!(t::Symbol,
             quote
                 $t = unstack($t, $i_varlist, $j_var_qn, $s)
                 # rename variables in the df
-                for n in names($t)
+                for n in propertynames($t)
                     # ignore id
                     (n ∈ $i_varlist) && continue;
                     # rename the variables
@@ -171,7 +171,7 @@ macro reshape_wide!(t::Symbol,
                     dfv[i] = unstack($t, $i_varlist, $j_var_qn, s[i])
                 end
                 # rename variables in the first df
-                for n in names(dfv[1])
+                for n in propertynames(dfv[1])
                     # ignore id
                     (n ∈ $i_varlist) && continue;
                     # rename the variables
@@ -180,7 +180,7 @@ macro reshape_wide!(t::Symbol,
                 end
                 # copy over the columns from the remaining df's
                 for i = 2:length($stubs_qn)
-                    for n in names(dfv[i])
+                    for n in propertynames(dfv[i])
                         # ignore id
                         (n ∈ $i_varlist) && continue;
                         # otherwise copy over the new variables
@@ -245,7 +245,7 @@ macro reshape_long!(t::Symbol,
             stubs = $stubs
             # get all variables in the dataframe that have the pattern stub*
             variables_by_stub = Vector{Vector{Symbol}}(undef, length(stubs))
-            n = names($t)
+            n = propertynames($t)
             n_str = String.(n)
             for s_ind = 1:length(stubs) 
                 stub_str = String(stubs[s_ind])
@@ -277,12 +277,11 @@ macro reshape_long!(t::Symbol,
             end
             # merge in the columns from the remaining df's
             for i = 2:length($stubs)
-                for n in names(dfv[i])
+                for n in propertynames(dfv[i])
                     # ignore id
                     ((n ∈ $i_varlist) || (n == $j_var_qn)) && continue;
                     # otherwise merge in the new variables
-                    #dfv[1][!,n] = dfv[i][!,n]
-                    dfv[1] = join(dfv[1], dfv[i], on = union($i_varlist, [$j_var_qn]), kind = :outer)
+                    dfv[1] = outerjoin(dfv[1], dfv[i], on = union($i_varlist, [$j_var_qn]), makeunique = false, indicator=nothing, validate=(false,false))
                 end
             end
             $t = dfv[1]

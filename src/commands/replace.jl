@@ -88,7 +88,7 @@ macro replace_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union{
     return esc(
         quote
             # check variable is not present
-            ($(assigned_var_qn) ∈ names($t)) || error("Variable $($(assigned_var_qn)) not present in DataFrame.")
+            ($(assigned_var_qn) ∈ propertynames($t)) || error("Variable $($(assigned_var_qn)) not present in DataFrame.")
             
             # sort, if we need to, (first by-variables, then sort-variables)
             if !isnothing($(varlist_sort)) && !isempty($(varlist_sort))
@@ -112,7 +112,7 @@ macro replace_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union{
             end
             # execute, and copy it to another dataframe, 
             # otherwise we get copies of the group variables in there as well
-            t2 = by($t, $varlist_by, my_f )
+            t2 = combine(my_f, groupby($t,$varlist_by, sort=false, skipmissing = false ))
             @with $t begin
                 for _n = 1:size($t,1)
                     if (isnothing($filter) ? true : $filter)
@@ -158,7 +158,7 @@ macro replace_byrow!(t::Symbol,
     return esc(
         quote
             # check variable is present
-            ($(assigned_var_qn) ∉ names($t)) && error("Variable $($(assigned_var_qn)) not present in DataFrame.")
+            ($(assigned_var_qn) ∉ propertynames($t)) && error("Variable $($(assigned_var_qn)) not present in DataFrame.")
             
             # sort, if we need to, (first by-variables, then sort-variables)
             if !isnothing($(varlist_sort)) && !isempty($(varlist_sort))
