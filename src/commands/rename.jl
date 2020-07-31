@@ -29,7 +29,7 @@ macro rename!(t::Symbol, arguments::Vector{Symbol})
     to_qn = QuoteNode(arguments[2])
     return esc(
         quote
-            ($(from_qn) ∈ names($t)) || error("Variable $($(from_qn)) not present in active DataFrame.")
+            ($(from_qn) ∈ propertynames($t)) || error("Variable $($(from_qn)) not present in active DataFrame.")
 
             # uses DataFrames
             rename!($t, $(from_qn) => $(to_qn))

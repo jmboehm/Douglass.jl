@@ -92,7 +92,7 @@ macro generate_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union
     return esc(
         quote
             # check variable is not present
-            ($(assigned_var_qn) ∉ names($t)) || error("Variable $($(assigned_var_qn)) already present in DataFrame.")
+            ($(assigned_var_qn) ∉ propertynames($t)) || error("Variable $($(assigned_var_qn)) already present in DataFrame.")
             
             # sort, if we need to, (first by-variables, then sort-variables)
             if !isnothing($(varlist_sort)) && !isempty($(varlist_sort))
@@ -116,7 +116,8 @@ macro generate_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union
             end
             # execute, and copy it to another dataframe, 
             # otherwise we get copies of the group variables in there as well
-            t2 = by($t, $varlist_by, my_f )
+            t2 = combine(my_f, groupby($t,$varlist_by, sort=false, skipmissing = false ))
+            
             $t[!,$(assigned_var_qn)] = missings(eltype(t2[!,$(assigned_var_qn)]),size($t,1))
             $t[!,$(assigned_var_qn)] = t2[!,$(assigned_var_qn)]
             $t
@@ -158,7 +159,7 @@ macro generate!(t::Symbol,
     return esc(
         quote
             # check variable is not present
-            ($(assigned_var_qn) ∉ names($t)) || error("Variable $($(assigned_var_qn)) already present in DataFrame.")
+            ($(assigned_var_qn) ∉ propertynames($t)) || error("Variable $($(assigned_var_qn)) already present in DataFrame.")
             
             # sort, if we need to, (first by-variables, then sort-variables)
             if !isnothing($(varlist_sort)) && !isempty($(varlist_sort))
@@ -201,7 +202,7 @@ end
 #             isa($(assigned_var_type),DataType) || error("assigned_var_type must be a DataType")
 
 #             # check variable is not present
-#             ($(assigned_var) ∉ names($t)) || error("Variable $(assigned_var) already present in DataFrame.")
+#             ($(assigned_var) ∉propertynames($t)) || error("Variable $(assigned_var) already present in DataFrame.")
 #             $t[!,$(assigned_var)] = missings($assigned_var_type,size($t,1))
 
 #             # sort, if we need to, (first by-variables, then sort-variables)
@@ -231,7 +232,7 @@ end
 # macro generate!(t,varname,ex,filter)
 #     esc(
 #         quote
-#             if $varname ∈ names($t)
+#             if $varname ∈ propertynames($t)
 #                 error("Table already has a column with this name.")
 #             end
 #             local x = @with($t, ifelse.($filter, $ex , missing))
@@ -259,7 +260,7 @@ end
 #             args = $arguments
 
 #             # check variable is not present
-#             ($(assigned_var) ∉ names($t)) || error("Variable $(assigned_var) already present in DataFrame.")
+#             ($(assigned_var) ∉ propertynames($t)) || error("Variable $(assigned_var) already present in DataFrame.")
 
 #             # this is the function that maps every sub-df into its transformed df
 #             my_f = _df -> @byrow! _df begin

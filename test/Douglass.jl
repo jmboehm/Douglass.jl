@@ -14,7 +14,7 @@ d"generate :x = :SepalLength"
 @test all(df.x .== df.SepalLength)
 select!(df, Not(:x))
 d"generate :x = :SepalWidth + :PetalLength"
-@test (:x ∈ names(df))
+@test (:x ∈ propertynames(df))
 @test df[1,:x] ≈ 4.9 atol = 1e-4
 select!(df, Not(:x))    # this drops the column, and we can re-start
 d"generate :x = :SepalWidth + :PetalLength if :PetalLength .> 1.3"
@@ -40,7 +40,7 @@ d"by :Species : generate :x = :SepalLength"
 @test all(df.x .== df.SepalLength)
 select!(df, Not(:x))
 d"by :Species : generate :x = :SepalWidth + :PetalLength"
-@test (:x ∈ names(df))
+@test (:x ∈ propertynames(df))
 @test df[1,:x] ≈ 4.9 atol = 1e-4
 select!(df, Not(:x))    # this drops the column, and we can re-start
 d"bysort :Species (:SepalLength) : generate :x = :SepalWidth + :PetalLength if :PetalLength .> 1.3"
@@ -62,7 +62,7 @@ select!(df, Not(:y))
 # Test the generate without by/bysort
 select!(df, Not(:z))
 d"gen :z = 1.0"
-@test (:z ∈ names(df))
+@test (:z ∈ propertynames(df))
 @test df[1,:z] == 1.0
 select!(df, Not(:z))
 d"generate :z = :SepalWidth + :PetalLength"
@@ -72,7 +72,7 @@ d"gen :z = :SepalWidth + :PetalLength if :PetalWidth > 1.8"
 @test sum(skipmissing(df.z)) ≈ 295.9  atol = 1e-4
 d"gen :z2 = _n"
 d"drop :z2"
-@test :z2 ∉ names(df)
+@test :z2 ∉ propertynames(df)
 d"gen :z2 = :SepalLength"
 
 # `drop` *************************************************************************
@@ -81,10 +81,10 @@ df = dataset("datasets", "iris")
 Douglass.set_active_df(:df)
 
 d"drop :SepalLength"
-@test :SepalLength ∉ names(df)
+@test :SepalLength ∉ propertynames(df)
 d"drop :PetalWidth :PetalLength"
-@test :PetalWidth ∉ names(df)
-@test :PetalLength ∉ names(df)
+@test :PetalWidth ∉ propertynames(df)
+@test :PetalLength ∉ propertynames(df)
 
 d"drop if :SepalWidth > 3.0"
 @test size(df, 1) == 83
@@ -107,7 +107,7 @@ df = dataset("datasets", "iris")
 Douglass.set_active_df(:df)
 
 d"keep :SepalLength :SepalWidth"
-@test :PetalWidth ∉ names(df)
+@test :PetalWidth ∉ propertynames(df)
 d"keep if :SepalWidth > 3.1"
 @test size(df,1) == 56
 d"keep if _n <= 10"
@@ -288,7 +288,7 @@ df = dataset("datasets", "iris")
 Douglass.set_active_df(:df)
 
 d"rename :SepalLength :SL"
-@test :SL ∈ names(df)
+@test :SL ∈ propertynames(df)
 
 # `replace` **********************************************************************
 
@@ -303,7 +303,7 @@ d"replace :x = 1.0"
 d"replace :x = :SepalLength"
 @test all(df.x .== df.SepalLength)
 d"replace :x = :SepalWidth + :PetalLength"
-@test (:x ∈ names(df))
+@test (:x ∈ propertynames(df))
 @test df[1,:x] ≈ 4.9 atol = 1e-4
 d"replace :x = :SepalWidth + :PetalLength if :PetalLength .> 1.3"
 @test all((df.x .== df.SepalWidth .+ df.PetalLength) .| (df.PetalLength .<= 1.3))
@@ -329,7 +329,7 @@ d"by :Species : replace :x = 1.0"
 d"by :Species : replace :x = :SepalLength"
 @test all(df.x .== df.SepalLength)
 d"by :Species : replace :x = :SepalWidth + :PetalLength"
-@test (:x ∈ names(df))
+@test (:x ∈ propertynames(df))
 @test df[1,:x] ≈ 4.9 atol = 1e-4
 d"bysort :Species (:SepalLength) : replace :x = :SepalWidth + :PetalLength if :PetalLength .> 1.3"
 @test sum(skipmissing(df.x)) ≈ 1022.3 atol = 1e-4
@@ -345,7 +345,7 @@ d"gen :z = 0.0"
 d"bysort :Species (:SepalLength) : replace :z = :x[_n - 2]"
 sort!(df, [:Species, :SepalLength])
 d"replace :z = 1.0"
-@test (:z ∈ names(df))
+@test (:z ∈ propertynames(df))
 @test df[1,:z] == 1.0
 d"replace :z = :SepalWidth + :PetalLength"
 @test sum(skipmissing(df.z)) ≈ 1022.3  atol = 1e-4
@@ -365,12 +365,12 @@ Douglass.set_active_df(:df)
 df.id = collect(1:(size(df,1)))
 select!(df,Not([:PetalLength,:PetalWidth]))
 d"reshape_long :Sepal , i(:id) j(:Var)"
-@test :Var ∈ names(df)
-@test :Sepal ∈ names(df)
+@test :Var ∈ propertynames(df)
+@test :Sepal ∈ propertynames(df)
 @test size(df,1) == 300
 d"reshape_wide :Sepal , i(:id) j(:Var)"
-@test :SepalLength ∈ names(df)
-@test :SepalWidth ∈ names(df)
+@test :SepalLength ∈ propertynames(df)
+@test :SepalWidth ∈ propertynames(df)
 @test size(df,1) == 150
 df2 = dataset("datasets", "iris")
 for v in [:SepalLength, :SepalWidth]
@@ -383,15 +383,15 @@ Douglass.set_active_df(:df)
 df.id = collect(1:(size(df,1)))
 
 d"reshape_long :Sepal :Petal, i(:id) j(:Var)"
-@test :Var ∈ names(df)
-@test :Sepal ∈ names(df)
-@test :Petal ∈ names(df)
+@test :Var ∈ propertynames(df)
+@test :Sepal ∈ propertynames(df)
+@test :Petal ∈ propertynames(df)
 @test size(df,1) == 300
 d"reshape_wide :Sepal :Petal, i(:id) j(:Var)"
-@test :SepalLength ∈ names(df)
-@test :SepalWidth ∈ names(df)
-@test :PetalLength ∈ names(df)
-@test :PetalWidth ∈ names(df)
+@test :SepalLength ∈ propertynames(df)
+@test :SepalWidth ∈ propertynames(df)
+@test :PetalLength ∈ propertynames(df)
+@test :PetalWidth ∈ propertynames(df)
 @test size(df,1) == 150
 df2 = dataset("datasets", "iris")
 for v in [:SepalLength, :SepalWidth, :PetalLength, :PetalWidth]

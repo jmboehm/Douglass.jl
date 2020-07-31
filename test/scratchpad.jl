@@ -173,12 +173,12 @@
 # df.id = collect(1:(size(df,1)))
 # select!(df,Not([:PetalLength,:PetalWidth]))
 # d"reshape_long :Sepal , i(:id) j(:Var)"
-# @test :Var ∈ names(df)
-# @test :Sepal ∈ names(df)
+# @test :Var ∈ propertynames(df)
+# @test :Sepal ∈ propertynames(df)
 # @test size(df,1) == 300
 # d"reshape_wide :Sepal , i(:id) j(:Var)"
-# @test :SepalLength ∈ names(df)
-# @test :SepalWidth ∈ names(df)
+# @test :SepalLength ∈ propertynames(df)
+# @test :SepalWidth ∈ propertynames(df)
 # @test size(df,1) == 150
 # df2 = dataset("datasets", "iris")
 # for v in [:SepalLength, :SepalWidth]
@@ -192,15 +192,15 @@
 # df.id = collect(1:(size(df,1)))
 
 # d"reshape_long :Sepal :Petal, i(:id) j(:Var)"
-# @test :Var ∈ names(df)
-# @test :Sepal ∈ names(df)
-# @test :Petal ∈ names(df)
+# @test :Var ∈ propertynames(df)
+# @test :Sepal ∈ propertynames(df)
+# @test :Petal ∈ propertynames(df)
 # @test size(df,1) == 300
 # d"reshape_wide :Sepal :Petal, i(:id) j(:Var)"
-# @test :SepalLength ∈ names(df)
-# @test :SepalWidth ∈ names(df)
-# @test :PetalLength ∈ names(df)
-# @test :PetalWidth ∈ names(df)
+# @test :SepalLength ∈ propertynames(df)
+# @test :SepalWidth ∈ propertynames(df)
+# @test :PetalLength ∈ propertynames(df)
+# @test :PetalWidth ∈ propertynames(df)
 # @test size(df,1) == 150
 # df2 = dataset("datasets", "iris")
 # for v in [:SepalLength, :SepalWidth, :PetalLength, :PetalWidth]
