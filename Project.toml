@@ -1,7 +1,7 @@
 name = "Douglass"
 uuid = "2218d074-27e7-5dc7-9146-ee5ed9a71057"
 authors = ["Johannes Boehm <johannes.boehm@gmail.com>"]
-version = "0.1.1"
+version = "0.2.0"
 
 [deps]
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
