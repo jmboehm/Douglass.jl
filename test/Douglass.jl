@@ -1,6 +1,5 @@
 using Douglass
 using RDatasets, Test
-using DataFramesMeta 
 using DataFrames
 
 df = dataset("datasets", "iris")

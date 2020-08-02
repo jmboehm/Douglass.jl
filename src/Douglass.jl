@@ -33,6 +33,8 @@ module Douglass
     using MacroTools
     using REPL
 
+    import DataFramesMeta: @with, @where
+
     # types
     include("Command.jl")
 

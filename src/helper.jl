@@ -62,7 +62,7 @@ end
 macro assert_filter(t::Symbol, filter::Expr)
     esc(
         quote
-            local x = @with($t, $filter)
+            local x = Douglass.@with($t, $filter)
             (typeof(x) <: BitArray{1}) || (typeof(x) <: Vector{Union{Missing,Bool}}) || error("filter is not a valid boolean vector.")
             true
         end

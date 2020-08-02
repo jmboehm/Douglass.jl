@@ -99,7 +99,7 @@ macro replace_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union{
             #$t[!,$(assigned_var)] = missings(assigned_var_type,size($t,1))
 
             # this is the function that maps every sub-df into its transformed df
-            my_f = _df -> @with _df begin
+            my_f = _df -> Douglass.@with _df begin
                 # define _N 
                 _N = size(_df, 1)
                 # fill the new variable, row by row
@@ -113,7 +113,7 @@ macro replace_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union{
             # execute, and copy it to another dataframe, 
             # otherwise we get copies of the group variables in there as well
             t2 = combine(my_f, groupby($t,$varlist_by, sort=false, skipmissing = false ))
-            @with $t begin
+            Douglass.@with $t begin
                 for _n = 1:size($t,1)
                     if (isnothing($filter) ? true : $filter)
                         $(assigned_var_qn)[_n] = t2[_n,^($(assigned_var_qn))]
@@ -165,7 +165,7 @@ macro replace_byrow!(t::Symbol,
                 sort!($t, $varlist_sort)
             end
 
-            @with $t begin
+            Douglass.@with $t begin
                 # define _N 
                 _N = size($t, 1)
                 # fill the new variable, row by row

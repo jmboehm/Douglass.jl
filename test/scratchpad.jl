@@ -26,7 +26,7 @@
 
 # a = :(:x = :SepalWidth + :PetalLength)
 
-# @with(df, :SepalWidth[1] + :PetalLength[1] )
+# Douglass.@with(df, :SepalWidth[1] + :PetalLength[1] )
 
 # dump(:(Mymodule.@mymacro) )
 

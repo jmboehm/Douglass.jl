@@ -150,7 +150,7 @@ macro generate_byvec!(t::Symbol,
                 # check variable is not present
                 ($(assigned_var_qn) ∉ propertynames($t)) || error("Variable $($(assigned_var_qn)) already present in DataFrame.")
                 # determine the column type from doing the transformation on the DF
-                assigned_var_type = eltype(@with($t,$(transformation)))
+                assigned_var_type = eltype(Douglass.@with($t,$(transformation)))
                 # create the new column
                 $t[!,$(assigned_var_qn)] = missings(assigned_var_type,size($t,1))
                 # do the assignment
@@ -191,10 +191,10 @@ macro transform_byvec2!(t::Symbol,
                 # define _N 
                 _N = size(_df, 1)
                 # construct a vector that tells us whether we should copy over the resulting value into the DF
-                assignme = @with(_df, $filter)
+                assignme = Douglass.@with(_df, $filter)
                 #@show assignme
-                sdf = @where(_df, $filter)
-                result = @with(sdf, Douglass.helper_expand(sdf,$(transformation)) )
+                sdf = Douglass.@where(_df, $filter)
+                result = Douglass.@with(sdf, Douglass.helper_expand(sdf,$(transformation)) )
                 # make sure that assignment array is of same size
                 (length(result) == sum(assignme)) || error("Assignment operation results in a vector of the wrong size.")
                 __n = 1
@@ -231,7 +231,7 @@ macro transform_byvec2!(t::Symbol,
                 # define _N 
                 _N = size(_df, 1)
                 # do the transformation
-                result = @with(_df, Douglass.helper_expand(_df,$(transformation)) )
+                result = Douglass.@with(_df, Douglass.helper_expand(_df,$(transformation)) )
                 # make sure that assignment array is of same size
                 (length(result) == size(_df,1)) || error("Assignment operation results in a vector of the wrong size.")
                 _df[:,$(assigned_var_qn)] = result
@@ -260,9 +260,9 @@ macro transform_byvec2!(t::Symbol,
 
                 _N = size(_df, 1)
                 # construct a vector that tells us whether we should copy over the resulting value into the DF
-                assignme = @with(_df, $filter)
-                sdf = @where(_df, $filter)
-                result = @with(sdf, Douglass.helper_expand(sdf,$(transformation)) )
+                assignme = Douglass.@with(_df, $filter)
+                sdf = Douglass.@where(_df, $filter)
+                result = Douglass.@with(sdf, Douglass.helper_expand(sdf,$(transformation)) )
                 # make sure that assignment array is of same size
                 (length(result) == sum(assignme)) || error("Assignment operation results in a vector of the wrong size.")
                 __n::Int64 = 1
@@ -294,7 +294,7 @@ macro transform_byvec2!(t::Symbol,
                 end
                 _N = size(_df, 1)
                 # construct a vector that tells us whether we should copy over the resulting value into the DF
-                result = @with(_df, Douglass.helper_expand(_df,$(transformation)) )
+                result = Douglass.@with(_df, Douglass.helper_expand(_df,$(transformation)) )
                 # copy over manually
                 # this is slower but preserves the type / makes automatic type conversion
                 for _n = 1:_N
@@ -448,7 +448,7 @@ end
 #                 sort!($t, vcat($varlist_by, $varlist_sort))
 #             end
 #             #determine type of resulting column from the type of the first element
-#             assigned_var_type = eltype(@with($t,$(transformation)))
+#             assigned_var_type = eltype(Douglass.@with($t,$(transformation)))
 #             $t[!,$(assigned_var_qn)] = missings(assigned_var_type,size($t,1))
 
 #             # this is the function that maps every sub-df into its transformed df
@@ -456,10 +456,10 @@ end
 #                 # define _N 
 #                 _N = size(_df, 1)
 #                 # construct a vector that tells us whether we should copy over the resulting value into the DF
-#                 assignme = @with(_df, $filter)
+#                 assignme = Douglass.@with(_df, $filter)
 #                 #@show assignme
-#                 sdf = @where(_df, $filter)
-#                 result = @with(sdf, Douglass.helper_expand(sdf,$(transformation)) )
+#                 sdf = Douglass.@where(_df, $filter)
+#                 result = Douglass.@with(sdf, Douglass.helper_expand(sdf,$(transformation)) )
 #                 # make sure that assignment array is of same size
 #                 (length(result) == sum(assignme)) || error("Assignment operation results in a vector of the wrong size.")
 #                 __n = 1
@@ -520,7 +520,7 @@ end
 #                 # define _N 
 #                 _N = size(_df, 1)
 #                 #_df = @transform($t, $(assigned_var) = $(transformation))
-#                 _df[!,$(assigned_var_qn)] = @with(_df, Douglass.helper_expand(_df,$(transformation)) )
+#                 _df[!,$(assigned_var_qn)] = Douglass.@with(_df, Douglass.helper_expand(_df,$(transformation)) )
 #             end
 #             $t = by($t, $varlist_by, my_f )
 #         end
@@ -575,14 +575,14 @@ end
 
 #             if :fill ∈ args
 #                 # assign to all rows in each group, even if $filter is not true
-#                 out = by($t, $varlist_by, _df -> @with(@where(_df, $filter), Douglass.helper_expand(_df,$(transformation))))
+#                 out = by($t, $varlist_by, _df -> Douglass.@with(Douglass.@where(_df, $filter), Douglass.helper_expand(_df,$(transformation))))
 #                 $t[!,$assigned_var] = out[!,:x1]
 #             else
 #                 # assign only to rows where $filter is true
 #                 $t[!,$(assigned_var)] = missings(Float64, size($t,1))
-#                 assignme = @with($t,$(filter))
-#                 out = by($t, $varlist_by, _df -> @with(@where(_df, $filter), Douglass.helper_expand(_df,$(transformation))))
-#                 @with $t begin
+#                 assignme = Douglass.@with($t,$(filter))
+#                 out = by($t, $varlist_by, _df -> Douglass.@with(Douglass.@where(_df, $filter), Douglass.helper_expand(_df,$(transformation))))
+#                 Douglass.@with $t begin
 #                     for i = 1:size($t,1)
 #                         if assignme[i]
 #                             $(assigned_var)[i] = out[i,^(:x1)]
@@ -605,14 +605,14 @@ end
 
 #             if :fill ∈ args
 #                 # assign to all rows in each group, even if $filter is not true
-#                 out = by($t, $varlist_by, _df -> @with(@where(_df, $filter), Douglass.helper_expand(_df,$(transformation))))
+#                 out = by($t, $varlist_by, _df -> Douglass.@with(Douglass.@where(_df, $filter), Douglass.helper_expand(_df,$(transformation))))
 #                 $t[!,$assigned_var] = out[!,:x1]
 #             else
 #                 # assign only to rows where $filter is true
 #                 $t[!,$(assigned_var)] = missings(Float64, size($t,1))
-#                 assignme = @with($t,$(filter))
-#                 out = by($t, $varlist_by, _df -> @with(@where(_df, $filter), Douglass.helper_expand(_df,$(transformation))))
-#                 @with $t begin
+#                 assignme = Douglass.@with($t,$(filter))
+#                 out = by($t, $varlist_by, _df -> Douglass.@with(Douglass.@where(_df, $filter), Douglass.helper_expand(_df,$(transformation))))
+#                 Douglass.@with $t begin
 #                     for i = 1:size($t,1)
 #                         if assignme[i]
 #                             $(assigned_var)[i] = out[i,^(:x1)]
