@@ -1,3 +1,5 @@
+using Revise
+
 using Douglass
 using RDatasets, Test
 using DataFrames
@@ -136,10 +138,6 @@ select!(df, Not([:x]))
 d"bysort :Species (:SepalLength) : egen :x = 1.0 if :SepalWidth .< 3.4"
 @test all(.!ismissing.(df.x) .| (df.SepalWidth .>= 3.4) )
 select!(df, Not([:x]))
-d"bysort :Species (:SepalLength) : egen :x::Int64 = 1.0 if :SepalWidth .< 3.4"
-@test all(.!ismissing.(df.x) .| (df.SepalWidth .>= 3.4) )
-@test eltype(df.x) == Union{Missing, Int64}
-select!(df, Not([:x]))
 
 # with `by` but not `if`
 
@@ -156,10 +154,6 @@ select!(df, Not([:x]))
 d"bysort :Species (:SepalLength) : egen :x = 1.0 "
 @test all(.!ismissing.(df.x) .| (df.SepalWidth .>= 3.4) )
 select!(df, Not([:x]))
-d"bysort :Species (:SepalLength) : egen :x::Int64 = 1.0 "
-@test all(.!ismissing.(df.x) .| (df.SepalWidth .>= 3.4) )
-@test eltype(df.x) == Union{Missing, Int64}
-select!(df, Not([:x]))
 
 # without `by` but with `if`
 
@@ -175,10 +169,6 @@ d"egen :x = :SepalLength if :SepalWidth .< 3.4"
 select!(df, Not([:x]))
 d"egen :x = 1.0 if :SepalWidth .< 3.4"
 @test all(.!ismissing.(df.x) .| (df.SepalWidth .>= 3.4) )
-select!(df, Not([:x]))
-d"egen :x::Int64 = 1.0 if :SepalWidth .< 3.4"
-@test all(.!ismissing.(df.x) .| (df.SepalWidth .>= 3.4) )
-@test eltype(df.x) == Union{Missing, Int64}
 select!(df, Not([:x]))
 
 # without `by` and without `if`
@@ -198,10 +188,6 @@ select!(df, Not([:x]))
 d"egen :x = 1.0 "
 @test all(.!ismissing.(df.x)  )
 @test df.x[1] ≈ 1.0 atol = 1e-4
-select!(df, Not([:x]))
-d"egen :x::Int64 = 1.0"
-@test all(.!ismissing.(df.x) )
-@test eltype(df.x) == Union{Missing, Int64}
 select!(df, Not([:x]))
 
 # ereplace *************

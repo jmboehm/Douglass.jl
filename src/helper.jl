@@ -15,6 +15,43 @@ function ref_quotenodes!(e::Expr, headtype::Symbol = :top)
     e
 end
 
+# recursively goes through an expression and replaces all QuoteNode's by s[#], while populating 
+# qn_vec with exactly these QuoteNodes
+function replace_QuoteNodes!(e::Expr, s::Symbol, qn_vec::Vector{QuoteNode})
+    for aind = 1:length(e.args)
+        a = e.args[aind]
+        if MacroTools.isexpr(a)
+            replace_QuoteNodes!(a, s, qn_vec)
+        elseif (typeof(a) == QuoteNode)
+            # replace this
+            idx = findfirst(isequal(a), qn_vec)
+            if !isnothing(idx)
+                # already exists in qn_vec
+                e.args[aind] = Expr(:ref, s, idx)
+            else
+                push!(qn_vec, e.args[aind])
+                e.args[aind] = Expr(:ref, s, length(qn_vec) )
+            end
+        end
+    end
+end
+
+# recursively go through the expression and replace arg[#] by arg[#][index]
+function push_index!(e::Expr, index::Symbol, s::Symbol)
+    if (e.head == :ref) && (length(e.args)>1) && (e.args[1] == s)
+        e.args[1] = copy(e)
+        e.args[2] = index
+    else
+        # go through arguments and if they are expressions, go deeper
+        for aind = 1:length(e.args)
+            a = e.args[aind]
+            if MacroTools.isexpr(a)
+                push_index!(a, index, s)
+            end
+        end
+    end
+end
+
 # removes the colon at the start of a string, if present
 function stripcolon(s::AbstractString)
     return (length(s)>1 && s[1] == ':') ? s[2:end] : s
@@ -55,6 +92,34 @@ function helper_expand(l::Int64, x)
     (ismissing(x) || size(x,1) == 1) ? repeat([x],l) : x
 end
 
+function assign_helper!(var, indices, assignee::Vector{T}) where T<:Any
+    var[indices] = assignee
+end
+function assign_helper!(var, indices, assignee::T) where T<:Any
+    var[indices] .= assignee
+end
+# argument with vector
+function assign_helper_gen(indices, assignee::Vector{T}) where T<:Any
+    var = missings(T,length(indices))
+    var[indices] = assignee
+    return var
+end
+# argument with scalar
+function assign_helper_gen(indices, assignee::T) where T<:Any
+    var = missings(T,length(indices))
+    var[indices] .= assignee
+    return var
+end
+# argument with vector
+function assign_helper_rep!(var, indices, assignee::Vector{T}) where T<:Any
+    var[indices] = assignee
+    return var
+end
+# argument with scalar
+function assign_helper_rep!(var,indices, assignee::T) where T<:Any
+    var[indices] .= assignee
+    return var
+end
 
 # Some helper macros
 

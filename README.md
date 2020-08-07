@@ -10,6 +10,13 @@
 
 Douglass.jl is a package for manipulating DataFrames in Julia using a syntax that is very similar to Stata.
 
+## Installation
+
+Douglass is not registered. To install, type `]` in the Julia command prompt, followed by
+```
+add https://github.com/jmboehm/Douglass.jl.git
+```
+
 ## Examples
 
 ```julia

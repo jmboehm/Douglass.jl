@@ -141,6 +141,8 @@ macro reshape_wide!(t::Symbol,
 
     stubs = arguments
     stubs_qn = QuoteNode.(arguments)
+
+    ij_varlist = cat(i_varlist, [j_varlist_qn[i].value for i=1:length(j_varlist_qn)], dims=1)
     # println("i_varlist_qn is a $(typeof(i_varlist)) with value $(i_varlist).")
     # println("j_var_qn is a $(typeof(j_var_qn)) with value $(j_var_qn).")
     # println("stubs_qn is a $(typeof(stubs_qn)) with value $(stubs_qn).")
@@ -149,6 +151,11 @@ macro reshape_wide!(t::Symbol,
         s = stubs_qn[1]
         return esc(
             quote
+                # check that i_varlist_qn and j_varlist_qn together uniquely identify observations
+                #Douglass.@duplicates_assert($t, $ij_varlist)
+                allunique(Tables.namedtupleiterator($t[!,$ij_varlist])) || 
+                    error("i() and j() variables do not uniquely identify observations in DataFrame.")
+
                 $t = unstack($t, $i_varlist, $j_var_qn, $s)
                 # rename variables in the df
                 for n in propertynames($t)
@@ -164,6 +171,11 @@ macro reshape_wide!(t::Symbol,
     else
         return esc(
             quote
+                #check that i_varlist_qn and j_varlist_qn together uniquely identify observations
+                # Douglass.@duplicates_assert($t, $ij_varlist)
+                allunique(Tables.namedtupleiterator($t[!,$ij_varlist])) || 
+                    error("i() and j() variables do not uniquely identify observations in DataFrame.")
+
                 dfv = Vector{typeof($t)}(undef,length($stubs_qn))
                 s = $(stubs)
                 # unstack for each stub
