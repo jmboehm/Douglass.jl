@@ -99,11 +99,11 @@ macro generate_byrow!(t::Symbol, varlist_by::Vector{Symbol}, varlist_sort::Union
                 sort!($t, vcat($varlist_by, $varlist_sort))
             end
             #determine type of resulting column from the type of the first element
-            assigned_var_type = eltype([@with($t,$(transformation)) for _n=1])
+            assigned_var_type = eltype([Douglass.@with($t,$(transformation)) for _n=1])
             $t[!,$(assigned_var_qn)] = missings(assigned_var_type,size($t,1))
 
             # this is the function that maps every sub-df into its transformed df
-            my_f = _df -> @with _df begin
+            my_f = _df -> Douglass.@with _df begin
                 # define _N 
                 _N = size(_df, 1)
                 # fill the new variable, row by row
@@ -167,10 +167,10 @@ macro generate!(t::Symbol,
             end
 
             #determine type of resulting column from the type of the first element
-            assigned_var_type = eltype([@with($t,$(transformation)) for _n=1])
+            assigned_var_type = eltype([Douglass.@with($t,$(transformation)) for _n=1])
             $t[!,$(assigned_var_qn)] = missings(assigned_var_type,size($t,1))
 
-            @with $t begin
+            Douglass.@with $t begin
                 # define _N 
                 _N = size($t, 1)
                 # fill the new variable, row by row
@@ -211,7 +211,7 @@ end
 #             end
             
 #             # this is the function that maps every sub-df into its transformed df
-#             my_f = _df -> @with _df begin
+#             my_f = _df -> Douglass.@with _df begin
 #                 # fill the new variable, row by row
 #                 for i in 1:size(_df,1)
 #                     if ($filter)  # if condition is not satisfied, leave with missing
@@ -235,7 +235,7 @@ end
 #             if $varname ∈ propertynames($t)
 #                 error("Table already has a column with this name.")
 #             end
-#             local x = @with($t, ifelse.($filter, $ex , missing))
+#             local x = Douglass.@with($t, ifelse.($filter, $ex , missing))
 #             # if we have a scalar, broadcast
 #             if size(x,1) == 1
 #                 $t[!,$varname] .= x

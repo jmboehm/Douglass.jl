@@ -33,6 +33,8 @@ module Douglass
     using MacroTools
     using REPL
 
+    import DataFramesMeta: @with, @where
+
     # types
     include("Command.jl")
 
@@ -48,6 +50,8 @@ module Douglass
     include("commands/replace.jl")
     include("commands/rename.jl")
     include("commands/egen.jl")
+    include("commands/erep.jl")
+    # include("commands/egen2.jl")
     include("commands/merge.jl")
     include("commands/reshape.jl")
     include("commands/duplicates.jl")

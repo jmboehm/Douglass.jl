@@ -83,3 +83,15 @@ macro duplicates_drop!(t::Symbol,
         end
     )
 end
+
+
+macro duplicates_assert(t::Symbol,
+    variables::Vector{Symbol})
+
+    esc(
+        quote
+            allunique(Tables.namedtupleiterator($t[!,$variables])) || 
+                error("$variables do not uniquely identify observations in DataFrame.")
+        end
+    )
+end

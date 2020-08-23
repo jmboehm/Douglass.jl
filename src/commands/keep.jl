@@ -57,7 +57,7 @@ end
 #             # check that filter expands to a Vector of Union{Bool, Missing}
 #             Douglass.@assert_filter($t, $filter)
 #             # drop it like it's hot
-#             keepme = @with($t, $filter)
+#             keepme = Douglass.@with($t, $filter)
 #             filter!(r -> keepme[DataFrames.row(r)] , $t)
 #         end
 #     )
@@ -89,7 +89,7 @@ macro keep_if!(t::Symbol, varlist_by::Vector{Symbol},
             $t[!,$(assigned_var_qn)] = trues(size($t,1))
 
             # this is the function that maps every sub-df into its transformed df
-            my_f = _df -> @with _df begin
+            my_f = _df -> Douglass.@with _df begin
                 # define _N 
                 _N = size(_df, 1)
                 # fill the new variable, row by row
@@ -126,7 +126,7 @@ macro keep_if!(t::Symbol, by::Nothing,
                 sort!($t, $varlist_sort)
             end
 
-            @with $t begin
+            Douglass.@with $t begin
                 keepme = BitArray{1}(trues(size($t,1)))
                 # define _N 
                 _N = size($t, 1)
