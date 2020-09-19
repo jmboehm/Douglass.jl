@@ -223,23 +223,23 @@ function parse(s::Stream)
         options = nothing
     end
 
-    # println("***************************************************************")
-    # println("Parser debug output:")
-    # println("By:")
-    # @show prefix.by
-    # println("Sort:")
-    # @show prefix.sort
-    # println("Command:")
-    # @show command 
-    # println("Arguments:")
-    # @show arguments 
-    # println("Filter:")
-    # @show filter 
-    # println("Using:")
-    # @show use 
-    # println("Options:")
-    # @show options 
-    # println("***************************************************************")
+    println("***************************************************************")
+    println("Parser debug output:")
+    println("By:")
+    @show prefix.by
+    println("Sort:")
+    @show prefix.sort
+    println("Command:")
+    @show command 
+    println("Arguments:")
+    @show arguments 
+    println("Filter:")
+    @show filter 
+    println("Using:")
+    @show use 
+    println("Options:")
+    @show options 
+    println("***************************************************************")
     
     return Command(prefix.by, prefix.sort, command, arguments, filter, use, options)
 
@@ -343,15 +343,27 @@ end
 
 # options are being parsed in the following way:
 #   `foo` results in an entry "foo" => true 
-#   `foo(bar)` results in an entry "foo" => Meta.parse(bar)
+#   `foo(bar)` results in an entry "foo" => Meta.parse(bar), unless `bar` is a sequence of
+#   symbols separated by spaces, then they get parsed as `Vector{Symbol}``
 function parse_options(str::AbstractString)
     s = Stream(str,1)
     out = Dict{String, Any}()
     while !parse_eof(s)
         word, del = get_word(s)
         if !isempty(strip(word))
-            k, v = parse_option(strip(word))
-            push!(out, k => Meta.parse(v))
+            k, vs = parse_option(strip(word))
+            # better parsing of the stuff inside the bracket: Vector{Symbol} if possible
+            args = split(strip(vs), " ")
+            args = args[.!(isempty.(args))]
+            if all([args[i][1] == ':' for i=1:size(args,1)])
+                # looks like it's a varlist... parse as Vector{Symbol}
+                v = Symbol.([args[i][2:end] for i=1:size(args,1)])
+            else
+                # parse as Expr
+                v = Meta.parse(vs)
+            end
+            push!(out, k => v)
+
         end
         if (del == :delimiter_colon) || (del == :delimiter_comma)
             error("Parse error: unexpected delimiter in options.\n$(flush_and_indicate(s))")

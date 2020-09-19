@@ -383,6 +383,20 @@ for v in [:SepalLength, :SepalWidth, :PetalLength, :PetalWidth]
     @test all(df[!,v] .== df2[!,v])
 end
 
+# with two index variables:
+wide = DataFrame(x = 1:12,
+       a  = 2:13,
+       b  = 3:14,
+       val1  = randn(12),
+       val2  = randn(12),
+       cname = repeat(["c", "d"], inner =6)
+       )
+Douglass.set_active_df(:wide)
+d"reshape_wide :val1 :val2, i(:x :a :b) j(:cname)"
+@test [:x,:a,:b,:val1c,:val1d,:val2c,:val2d] ⊆ propertynames(wide)
+d"reshape_long :val1 :val2, i(:x :a :b) j(:cname)"
+@test [:x,:a,:b,:cname,:val1,:val2] ⊆ propertynames(wide)
+
 # `sort` *************************************************************************
 
 df = dataset("datasets", "iris")
