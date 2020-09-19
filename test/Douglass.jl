@@ -431,6 +431,17 @@ d"gen :$$(name_of_new_var) = 1.0"
 @test :myname ∈ propertynames(df)
 @test df[1,:myname] == 1.0
 
+# Multiline expressions *******************
+
+df = dataset("datasets", "iris")
+Douglass.set_active_df(:df)
+
+d"""
+gen :x = 5
+gen :y = 6
+"""
+@test [:x,:y] ⊆ propertynames(df)
+
 # *******************
 
 # cheatsheet

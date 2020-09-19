@@ -1,18 +1,25 @@
 
 macro d_str(str)
-    # parse the command
-    cmd = Douglass.parse(str)
-    # return the call to the appropriate macro
-    # return esc(Expr(:macrocall, Expr(:., :Douglass, QuoteNode(Symbol("@$(cmd.command)"))), @__LINE__))
-    # return esc(Expr(:macrocall, Expr(:., :Douglass, QuoteNode(Symbol("@$(cmd.command)"))), @__LINE__, Douglass.active_df, cmd.arguments))
-    return esc(Expr(:macrocall, Expr(:., :Douglass, QuoteNode(Symbol("@$(cmd.command)"))), @__LINE__, 
-        Douglass.active_df,
-        cmd.by,
-        cmd.sort,
-        cmd.arguments,
-        cmd.filter,
-        cmd.use,
-        cmd.options ))
+    # split the command by linebreaks
+    s = split(str, r"\n|\r\n", limit=0, keepempty=false)
+    # for each line, parse the string and construct the expression
+    exs = Vector{Expr}()
+    for i = 1:length(s)
+        cmd = Douglass.parse(s[i])
+        push!(exs, esc(Expr(:macrocall, Expr(:., :Douglass, QuoteNode(Symbol("@$(cmd.command)"))), @__LINE__, 
+            Douglass.active_df,
+            cmd.by,
+            cmd.sort,
+            cmd.arguments,
+            cmd.filter,
+            cmd.use,
+            cmd.options )) )
+    end
+    # For debugging:
+    # @show exs
+    # and return it to the REPL
+    return Expr(:block, exs...)
+    
 end
 
 macro use(t::Symbol)
