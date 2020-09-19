@@ -421,6 +421,16 @@ Douglass.set_active_df(:people)
 d"duplicates_drop"
 @test size(people,1) == 2
 
+# Pseudo-String Interpolation *******************
+
+df = dataset("datasets", "iris")
+Douglass.set_active_df(:df)
+
+name_of_new_var = "myname"
+d"gen :$$(name_of_new_var) = 1.0"
+@test :myname ∈ propertynames(df)
+@test df[1,:myname] == 1.0
+
 # *******************
 
 # cheatsheet

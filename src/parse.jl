@@ -223,23 +223,23 @@ function parse(s::Stream)
         options = nothing
     end
 
-    println("***************************************************************")
-    println("Parser debug output:")
-    println("By:")
-    @show prefix.by
-    println("Sort:")
-    @show prefix.sort
-    println("Command:")
-    @show command 
-    println("Arguments:")
-    @show arguments 
-    println("Filter:")
-    @show filter 
-    println("Using:")
-    @show use 
-    println("Options:")
-    @show options 
-    println("***************************************************************")
+    # println("***************************************************************")
+    # println("Parser debug output:")
+    # println("By:")
+    # @show prefix.by
+    # println("Sort:")
+    # @show prefix.sort
+    # println("Command:")
+    # @show command 
+    # println("Arguments:")
+    # @show arguments 
+    # println("Filter:")
+    # @show filter 
+    # println("Using:")
+    # @show use 
+    # println("Options:")
+    # @show options 
+    # println("***************************************************************")
     
     return Command(prefix.by, prefix.sort, command, arguments, filter, use, options)
 
