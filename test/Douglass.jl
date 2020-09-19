@@ -383,6 +383,20 @@ for v in [:SepalLength, :SepalWidth, :PetalLength, :PetalWidth]
     @test all(df[!,v] .== df2[!,v])
 end
 
+# with two index variables:
+wide = DataFrame(x = 1:12,
+       a  = 2:13,
+       b  = 3:14,
+       val1  = randn(12),
+       val2  = randn(12),
+       cname = repeat(["c", "d"], inner =6)
+       )
+Douglass.set_active_df(:wide)
+d"reshape_wide :val1 :val2, i(:x :a :b) j(:cname)"
+@test [:x,:a,:b,:val1c,:val1d,:val2c,:val2d] ⊆ propertynames(wide)
+d"reshape_long :val1 :val2, i(:x :a :b) j(:cname)"
+@test [:x,:a,:b,:cname,:val1,:val2] ⊆ propertynames(wide)
+
 # `sort` *************************************************************************
 
 df = dataset("datasets", "iris")
@@ -406,6 +420,16 @@ people = DataFrame(ID = [20, 20, 40], Name = ["John Doe", "John Doe", "Jane Doe"
 Douglass.set_active_df(:people)
 d"duplicates_drop"
 @test size(people,1) == 2
+
+# Pseudo-String Interpolation *******************
+
+df = dataset("datasets", "iris")
+Douglass.set_active_df(:df)
+
+name_of_new_var = "myname"
+d"gen :$$(name_of_new_var) = 1.0"
+@test :myname ∈ propertynames(df)
+@test df[1,:myname] == 1.0
 
 # *******************
 
