@@ -1,7 +1,7 @@
 name = "Douglass"
 uuid = "2218d074-27e7-5dc7-9146-ee5ed9a71057"
 authors = ["Johannes Boehm <johannes.boehm@gmail.com>"]
-version = "0.0.1"
+version = "0.0.2"
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
@@ -23,6 +23,6 @@ DataFrames = "0.21"
 DataFramesMeta = "0.5"
 MacroTools = "0.5"
 RDatasets = "0.6"
-Revise = "2"
+Revise = "3"
 Tables = "1.0"
 julia = "1"
