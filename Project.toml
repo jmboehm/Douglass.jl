@@ -1,7 +1,7 @@
 name = "Douglass"
 uuid = "2218d074-27e7-5dc7-9146-ee5ed9a71057"
 authors = ["Johannes Boehm <johannes.boehm@gmail.com>"]
-version = "0.0.2"
+version = "0.0.1"
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
@@ -19,10 +19,10 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 Compat = "2, 3"
-DataFrames = "0.21"
-DataFramesMeta = "0.5"
+DataFrames = "1"
+DataFramesMeta = "0.6"
 MacroTools = "0.5"
-RDatasets = "0.6"
+RDatasets = "0.7"
 Revise = "3"
-Tables = "1.0"
+Tables = "1"
 julia = "1"
