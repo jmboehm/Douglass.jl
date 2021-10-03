@@ -58,7 +58,7 @@ Press the backtick (`` ` ``) to switch between the normal Julia REPL and the Dou
 
 ## Benchmarks
 
-![benchmark](http://github.com/jmboehm/Douglass.jl/tree/master/benchmark/benchmark.png)
+![benchmark](benchmark/benchmark.png "Benchmarks")
 
 These benchmarks are made using a synthetic dataset with 1m observations, on my Macbook Pro (Intel(R) Core(TM) i9-9980HK CPU @ 2.40GHz, Julia 1.6.2).
 
