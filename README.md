@@ -5,7 +5,7 @@
 ![Lifecycle](https://img.shields.io/badge/lifecycle-retired-orange.svg)
 ![Lifecycle](https://img.shields.io/badge/lifecycle-archived-red.svg)
 ![Lifecycle](https://img.shields.io/badge/lifecycle-dormant-blue.svg) -->
-![Lifecycle](https://img.shields.io/badge/lifecycle-experimental-orange.svg) [![Build Status](https://travis-ci.org/jmboehm/Douglass.jl.svg?branch=master)](https://travis-ci.org/jmboehm/Douglass.jl) [![Coverage Status](https://coveralls.io/repos/github/jmboehm/Douglass.jl/badge.svg?branch=master)](https://coveralls.io/github/jmboehm/Douglass.jl?branch=master)
+![Lifecycle](https://img.shields.io/badge/lifecycle-maturing-blue.svg) ![example branch parameter](https://github.com/jmboehm/Douglass.jl/actions/workflows/ci.yml/badge.svg?branch=master) [![codecov.io](http://codecov.io/github/jmboehm/RegressionTables.jl/coverage.svg?branch=master)](http://codecov.io/github/jmboehm/Douglass.jl?branch=master)
 
 
 Douglass.jl is a package for manipulating DataFrames in Julia using a syntax that is very similar to Stata.
@@ -55,6 +55,12 @@ See the [commands documentation page](commands.md) for more details on syntax of
 Press the backtick (`` ` ``) to switch between the normal Julia REPL and the Douglass REPL mode:
 
 ![REPL Screenshot](repl.png "Douglass REPL Screenshot")
+
+## Benchmarks
+
+![benchmark](http://github.com/jmboehm/Douglass.jl/tree/master/benchmark/benchmark.png)
+
+These benchmarks are made using a synthetic dataset with 1m observations, on my Macbook Pro (Intel(R) Core(TM) i9-9980HK CPU @ 2.40GHz, Julia 1.6.2).
 
 ## Notes
 
