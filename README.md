@@ -31,8 +31,8 @@ d"gen :z = :SepalLength + :SepalWidth"
 d"replace :z = _n if _n <= 10"
 # drop a variable
 d"drop :z"
-# construct the within-group mean for a subset of the observations
-d"bysort :Species : egen :z = mean(:SepalLength) if :SepalWidth .> 3.0"
+# construct the within-group sum for a subset of the observations
+d"bysort :Species : egen :z = sum(:SepalLength) if :SepalWidth .> 3.0"
 ```
 
 ## Commands implemented
