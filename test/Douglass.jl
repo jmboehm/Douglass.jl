@@ -3,7 +3,6 @@ using Revise
 using Douglass
 using RDatasets, Test
 using DataFrames
-using DataFramesMeta
 
 df = dataset("datasets", "iris")
 Douglass.@use(df)
