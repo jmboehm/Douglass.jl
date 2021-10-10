@@ -29,10 +29,12 @@
 #__precompile__()
 module Douglass
 
+    using Reexport
+    @reexport using DataFramesMeta
     using DataFrames, DataFramesMeta, Tables
     using MacroTools
     using REPL
-
+    
     import DataFramesMeta: @with, @where
 
     # types
