@@ -2,7 +2,7 @@ using Revise
 
 using Douglass
 using RDatasets, Test
-using DataFrames
+using DataFrames, DataFramesMeta
 
 df = dataset("datasets", "iris")
 Douglass.@use(df)
@@ -442,12 +442,32 @@ gen :y = 6
 """
 @test [:x,:y] ⊆ propertynames(df)
 
+# Multiline expressions on a DF *******************
+
+iris = dataset("datasets", "iris")
+Douglass.set_active_df(:iris)
+
+active = Douglass.get_active_df()
+@test active === :iris
+
+neuro = dataset("boot", "neuro")
+
+Douglass.@douglass neuro """
+gen :x = 5.0
+gen :y = 6.6
+"""
+@test [:x,:y] ⊆ propertynames(neuro)
+
+@test active === :iris
+
 # *******************
 
 # cheatsheet
 macroexpand(Main, :(@d_str("rename :SepalLength :SomethingBetter")))
 macroexpand(Main, :(@d_str("bysort :Species (:SepalLength) : gen :z = 1.0 if :SepalLength .< 1000.0")))
 
+
+macroexpand(Main, :(Douglass.@d_str("gen :x = 1.0")))
 # # Examples from the Readme.md
 
 # using Douglass, RDatasets

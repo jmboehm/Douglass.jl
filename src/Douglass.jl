@@ -62,7 +62,7 @@ module Douglass
 
     global active_df
 
-    export parse_varlist, @use, @d_str, set_active_df
+    export @use, @d_str, set_active_df
 
 end
 
