@@ -446,28 +446,28 @@ function parse(str::AbstractString)
 end
 
 
-"""
-parse_varlist()
+# """
+# parse_varlist()
 
-Parses an `AbstractString` into a `Vector{Symbol}`. The variables are assumed to be prefixed by colons and separated by whitespaces,
-e.g. in the format ":variable1 :variable2 :variable3".
+# Parses an `AbstractString` into a `Vector{Symbol}`. The variables are assumed to be prefixed by colons and separated by whitespaces,
+# e.g. in the format ":variable1 :variable2 :variable3".
 
-Throws an error if that's not the format
+# Throws an error if that's not the format
 
-Arguments:
-    str::AbstractString: string to be parsed
-"""
-function parse_varlist(str::AbstractString)
+# Arguments:
+#     str::AbstractString: string to be parsed
+# """
+# function parse_varlist(str::AbstractString)
 
-    s = strip(str)
-    vars = split(s," ")
-    vars = vars[.!isempty.(vars)]
-    # check that all whitespace-separated strings start with a colon
-    all([vars[i][1] for i=1:length(vars)] .== ':') || error("Parse error: invalid varlist.")
-    out = Symbol.(stripcolon.(vars))
-    return out
+#     s = strip(str)
+#     vars = split(s," ")
+#     vars = vars[.!isempty.(vars)]
+#     # check that all whitespace-separated strings start with a colon
+#     all([vars[i][1] for i=1:length(vars)] .== ':') || error("Parse error: invalid varlist.")
+#     out = Symbol.(stripcolon.(vars))
+#     return out
 
-end
+# end
 
 
 # macro d_str(ex)

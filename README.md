@@ -20,7 +20,7 @@ add https://github.com/jmboehm/Douglass.jl.git
 ## Examples
 
 ```julia
-using Douglass, RDatasets
+using Douglass, RDatasets, DataFrames, DataFramesMeta
 df = dataset("datasets", "iris")
 # set the active DataFrame
 Douglass.set_active_df(:df)

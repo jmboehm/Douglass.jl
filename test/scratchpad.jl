@@ -1,6 +1,19 @@
 
 # # *******************
 
+macro test(a, b)
+    @show a 
+    @show b
+    @assert b.head == :block
+    dump(b)
+    print("*****")
+    print(string(b.args[2]))
+end
+
+@test a begin 
+    gen :x = 1
+end
+
 # Douglass.@use(df)
 # Douglass.@use df
 
