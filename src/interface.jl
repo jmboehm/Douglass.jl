@@ -67,8 +67,12 @@ function set_active_df(df::Symbol)
 end
 
 function get_active_df()
-    global active_df
-    return active_df
+    if isdefined(Douglass,:active_df)
+        global active_df
+        return active_df
+    else 
+        return nothing 
+    end
 end
 
 # # the goal of this is just to return a string with the interpolated string
