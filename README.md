@@ -56,6 +56,26 @@ Press the backtick (`` ` ``) to switch between the normal Julia REPL and the Dou
 
 ![REPL Screenshot](repl.png "Douglass REPL Screenshot")
 
+## Multiline and operations on a particular DataFrame
+
+Douglass supports multiline input on the active dataframe:
+```julia
+d"""
+gen :x = 5
+gen :y = 6
+"""
+```
+
+The `@douglass` macro allows subsequent operations to be performed on one particular DataFrame:
+```julia
+using RDatasets
+iris = dataset("datasets", "iris")
+Douglass.@douglass iris """
+gen :x = :SepalWidth + :PetalWidth
+gen :y = 42
+"""
+```
+
 ## Benchmarks
 
 ![benchmark](benchmark/benchmark.png "Benchmarks")
@@ -67,10 +87,16 @@ These benchmarks are made using a synthetic dataset with 1m observations, on my 
 - Better documentation of the interface will come when the package is a bit more stable. In the meantime, the [Test script](https://github.com/jmboehm/Douglass.jl/blob/master/test/Douglass.jl) is probably the best introduction to the interface for those that know Stata.
 - Keep in mind that this is not Stata. [Here](differences-from-Stata.md) are some notable differences.
 
+## Bug reports
+
+Please file bug reports as [issues](https://github.com/jmboehm/Douglass.jl/issues).
+
 ## Roadmap / Todo's
 
 - Implement more commands
 - If other people find the package useful, it may be worth making the package extensible, so that other commands can be added in separate packages
+
+If you find the package useful or the idea promising, please consider giving it a star (at the top of the page).
 
 ## Misc
 

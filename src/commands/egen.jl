@@ -24,6 +24,7 @@ one or more variables in the right-hand side expression. That does _not_ include
 
 Differences to Stata:
   - Type declarations are done via `d"egen :x::Float64 = :y .+ :z"`. Types are from Julia, of course (which means we can finally use 64-bit Integers!)
+  - Note that any function used in the expression on the RHS needs to be defined. For example, `total` is not a base Julia function, and will not 'work' out of the box.
 """
 macro egenerate(t::Symbol, 
     by::Union{Vector{Symbol}, Nothing}, 
