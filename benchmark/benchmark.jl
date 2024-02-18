@@ -102,8 +102,16 @@ results[!,:julia] = [median(gen).time/1e9, median(egen).time/1e9, median(egenif)
 results[!,:relative] = results.julia ./ results.stata
 results[!,:test] = ["gen", "egen/by", "egen/by\n + if", "egen\n + corr", "reshape\nwide", "reshape\nlong", "duplicates\ndrop"]
 
-p = plot(results, x = "test", y = "relative", Guide.ylabel("Relative Time (Douglass/Stata)"), Guide.xlabel("Command"), Guide.yticks(ticks= [0, 1, 2, 3, 4, 5 ]))
+# p = plot(results, x = "test", y = "relative", Guide.ylabel("Relative Time (Douglass/Stata)"), Guide.xlabel("Command"), Guide.yticks(ticks= [0, 1, 2, 3, 4, 5 ]))
+p = plot(results, x = "test", y = "relative",
+    Scale.y_log(labels=d-> @sprintf("%2.2g",exp(d))),
+    Guide.ylabel("Relative Time (Douglass/Stata)"), Guide.xlabel("Command"),
+    Guide.yticks(ticks=log.([0.01, 0.1, 0.5, 1,2,5,10,20])),
+    Theme(panel_fill=colorant"white", background_color=colorant"white")
+) 
 
 draw(SVG("benchmark/benchmark.svg", 8inch, 5inch), p)
+using Cairo, Fontconfig
+draw(PNG("benchmark/benchmark.png", 8inch, 5inch), p)
 
 
