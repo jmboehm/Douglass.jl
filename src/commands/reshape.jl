@@ -283,7 +283,7 @@ macro reshape_long!(t::Symbol,
                     rename!($t, v => Symbol(rename_to))
                     push!(variables_by_stub_renamed, Symbol(rename_to))
                 end
-                dfv[s_ind] = stack($t, variables_by_stub_renamed, $i_varlist, variable_name=$j_var_qn, value_name=stubs[s_ind])
+                dfv[s_ind] = DataFrames.stack($t, variables_by_stub_renamed, $i_varlist, variable_name=$j_var_qn, value_name=stubs[s_ind])
                 # drop the columns that we have used
                 select!($t, Not(variables_by_stub_renamed))
             end
