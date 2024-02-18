@@ -10,6 +10,8 @@
 
 Douglass.jl is a package for manipulating DataFrames in Julia using a syntax that is very similar to Stata.
 
+**Note: Douglass.jl is in alpha, and may contain bugs. Please do try it out and report your experience. When using it in production, please check that the output is correct.**
+
 ## Installation
 
 Douglass is not registered. To install, type `]` in the Julia command prompt, followed by
@@ -80,7 +82,7 @@ gen :y = 42
 
 ![benchmark](benchmark/benchmark.png "Benchmarks")
 
-These benchmarks are made using a synthetic dataset with 1m observations, on my Macbook Pro (Intel(R) Core(TM) i9-9980HK CPU @ 2.40GHz, Julia 1.6.2).
+These benchmarks are made using a synthetic dataset with 1m observations, on my Macbook Pro (Intel(R) Core(TM) i9-9980HK CPU @ 2.40GHz, Julia 1.9.0, Stata/MP 17.0).
 
 ## Notes
 
@@ -97,6 +99,12 @@ Please file bug reports as [issues](https://github.com/jmboehm/Douglass.jl/issue
 - If other people find the package useful, it may be worth making the package extensible, so that other commands can be added in separate packages
 
 If you find the package useful or the idea promising, please consider giving it a star (at the top of the page).
+
+## Related Packages
+
+- [Tidier.jl](https://github.com/TidierOrg/Tidier.jl) is a set of Julia packages that allow data manipulation and plotting using R's tidyverse syntax. If you like tidyverse syntax, this package may be for you.
+- [StataCall.jl](https://github.com/jmboehm/StataCall.jl) is a package to call Stata from Julia
+- [julia.ado](https://github.com/droodman/julia.ado) is a package to call Julia from Stata
 
 ## Misc
 
